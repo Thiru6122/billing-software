@@ -19,13 +19,9 @@ const search = async (Model, req, res) => {
   }
   // console.log(fields)
 
-  let results = await Model.find({
-    ...fields,
-  })
-
-    .where('removed', false)
-    .limit(20)
-    .exec();
+  const query = { ...fields, removed: false };
+  if (req.storeId && Model.schema.paths.store) query.store = req.storeId;
+  const results = await Model.find(query).limit(20).exec();
 
   if (results.length >= 1) {
     return res.status(200).json({

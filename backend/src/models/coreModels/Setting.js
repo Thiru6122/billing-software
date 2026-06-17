@@ -1,15 +1,9 @@
 const mongoose = require('mongoose');
 
 const settingSchema = new mongoose.Schema({
-  removed: {
-    type: Boolean,
-    default: false,
-  },
-  enabled: {
-    type: Boolean,
-    default: true,
-  },
-
+  removed: { type: Boolean, default: false },
+  enabled: { type: Boolean, default: true },
+  store: { type: mongoose.Schema.ObjectId, ref: 'Store', required: true },
   settingCategory: {
     type: String,
     required: true,

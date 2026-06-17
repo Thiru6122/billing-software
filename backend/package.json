@@ -1,5 +1,5 @@
 {
-  "name": "idurar-erp-crm",
+  "name": "saltum-erp-crm",
   "version": "4.1.0",
   "engines": {
     "npm": "10.2.4",
@@ -39,7 +39,8 @@
     "pug": "^3.0.2",
     "resend": "^2.0.0",
     "shortid": "^2.2.16",
-    "transliteration": "^2.3.5"
+    "transliteration": "^2.3.5",
+    "serverless-http": "^3.2.0"
   },
   "devDependencies": {
     "nodemon": "3.0.1"
@@ -48,15 +49,15 @@
     "@": "src"
   },
   "main": "server.js",
-  "author": "IDURAR",
-  "email": "hello@idurarapp.com",
+  "author": "Saltum",
+  "email": "hello@saltum.app",
   "license": "Fair-code License",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/idurar/idurar-erp-crm/.git"
+    "url": "git+https://github.com/saltum/saltum-erp-crm/.git"
   },
   "bugs": {
-    "url": "https://github.com/idurar/idurar-erp-crm//issues"
+    "url": "https://github.com/saltum/saltum-erp-crm/issues"
   },
-  "homepage": "https://github.com/idurar/idurar-erp-crm/#readme"
+  "homepage": "https://github.com/saltum/saltum-erp-crm/#readme"
 }

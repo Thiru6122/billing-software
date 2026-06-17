@@ -11,6 +11,8 @@ const lang = {
   or: 'Or',
   already_have_account_login: 'Already Have Account Login',
   name: 'Name',
+  store: 'Store',
+  store_required: 'Enter your store name (e.g. main or your-company)',
   email: 'Email',
   password: 'Password',
   country: 'Country',

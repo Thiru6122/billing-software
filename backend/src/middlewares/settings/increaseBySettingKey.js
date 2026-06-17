@@ -2,14 +2,13 @@ const mongoose = require('mongoose');
 
 const Model = mongoose.model('Setting');
 
-const increaseBySettingKey = async ({ settingKey }) => {
+const increaseBySettingKey = async ({ settingKey, storeId }) => {
   try {
-    if (!settingKey) {
-      return null;
-    }
-
+    if (!settingKey) return null;
+    const filter = { settingKey };
+    if (storeId) filter.store = storeId;
     const result = await Model.findOneAndUpdate(
-      { settingKey },
+      filter,
       {
         $inc: { settingValue: 1 },
       },

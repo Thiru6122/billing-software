@@ -14,9 +14,9 @@ const readBySettingKey = async (req, res) => {
     });
   }
 
-  const result = await Model.findOne({
-    settingKey,
-  });
+  const query = { settingKey };
+  if (req.storeId) query.store = req.storeId;
+  const result = await Model.findOne(query);
 
   // If no results found, return document not found
   if (!result) {

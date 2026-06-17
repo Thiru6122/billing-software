@@ -41,6 +41,9 @@ export default function HeaderContent() {
             {currentAdmin?.name} {currentAdmin?.surname}
           </p>
           <p>{currentAdmin?.email}</p>
+          {currentAdmin?.store?.name && (
+            <p style={{ fontSize: 12, color: '#888' }}>{currentAdmin.store.name}</p>
+          )}
         </div>
       </div>
     );
@@ -129,5 +132,5 @@ export default function HeaderContent() {
 }
 
 //  console.log(
-//    '🚀 Welcome to IDURAR ERP CRM! Did you know that we also offer commercial customization services? Contact us at hello@idurarapp.com for more information.'
+//    Saltum ERP CRM
 //  );

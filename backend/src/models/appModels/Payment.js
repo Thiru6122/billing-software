@@ -1,11 +1,8 @@
 const mongoose = require('mongoose');
 
 const paymentSchema = new mongoose.Schema({
-  removed: {
-    type: Boolean,
-    default: false,
-  },
-
+  removed: { type: Boolean, default: false },
+  store: { type: mongoose.Schema.ObjectId, ref: 'Store', required: true },
   createdBy: { type: mongoose.Schema.ObjectId, ref: 'Admin', autopopulate: true, required: true },
   number: {
     type: Number,

@@ -37,8 +37,9 @@ const LoginPage = () => {
           className="login-form"
           initialValues={{
             remember: true,
-            email:'admin@admin.com',
-            password:'admin123',
+            storeSlug: 'main',
+            email: 'admin@admin.com',
+            password: 'admin123',
           }}
           onFinish={onFinish}
         >
@@ -59,7 +60,19 @@ const LoginPage = () => {
     );
   };
 
-  return <AuthModule authContent={<FormContainer />} AUTH_TITLE="Sign in" />;
+  return (
+    <AuthModule
+      authContent={
+        <>
+          <FormContainer />
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
+            <a href="/register-store">Create your store</a>
+          </div>
+        </>
+      }
+      AUTH_TITLE="Sign in to your store"
+    />
+  );
 };
 
 export default LoginPage;

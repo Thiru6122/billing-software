@@ -29,8 +29,10 @@ const isValidAuthToken = async (req, res, next, { userModel, jwtSecret = 'JWT_SE
         jwtExpired: true,
       });
 
+    const query = { _id: verified.id, removed: false };
+    if (verified.storeId) query.store = verified.storeId;
     const userPasswordPromise = UserPassword.findOne({ user: verified.id, removed: false });
-    const userPromise = User.findOne({ _id: verified.id, removed: false });
+    const userPromise = User.findOne(query).populate('store');
 
     const [user, userPassword] = await Promise.all([userPromise, userPasswordPromise]);
 
@@ -38,24 +40,22 @@ const isValidAuthToken = async (req, res, next, { userModel, jwtSecret = 'JWT_SE
       return res.status(401).json({
         success: false,
         result: null,
-        message: "User doens't Exist, authorization denied.",
+        message: "User doesn't exist or store mismatch, authorization denied.",
         jwtExpired: true,
       });
 
-    const { loggedSessions } = userPassword;
-
-    if (!loggedSessions.includes(token))
+    if (!userPassword || !userPassword.loggedSessions.includes(token))
       return res.status(401).json({
         success: false,
         result: null,
-        message: 'User is already logout try to login, authorization denied.',
+        message: 'Session expired or invalid. Please log in again.',
         jwtExpired: true,
       });
-    else {
-      const reqUserName = userModel.toLowerCase();
-      req[reqUserName] = user;
-      next();
-    }
+
+    const reqUserName = userModel.toLowerCase();
+    req[reqUserName] = user;
+    req.storeId = user.store && (user.store._id || user.store);
+    next();
   } catch (error) {
     return res.status(500).json({
       success: false,

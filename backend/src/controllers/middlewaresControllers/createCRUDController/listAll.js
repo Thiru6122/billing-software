@@ -4,23 +4,13 @@ const listAll = async (Model, req, res) => {
 
   //  Query the database for a list of all results
 
-  let result;
-  if (enabled === undefined) {
-    result = await Model.find({
-      removed: false,
-    })
-      .sort({ created: sort })
-      .populate()
-      .exec();
-  } else {
-    result = await Model.find({
-      removed: false,
-      enabled: enabled,
-    })
-      .sort({ created: sort })
-      .populate()
-      .exec();
-  }
+  const baseQuery = { removed: false };
+  if (req.storeId && Model.schema.paths.store) baseQuery.store = req.storeId;
+  if (enabled !== undefined) baseQuery.enabled = enabled;
+  const result = await Model.find(baseQuery)
+    .sort({ created: sort })
+    .populate()
+    .exec();
 
   if (result.length > 0) {
     return res.status(200).json({

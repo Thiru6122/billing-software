@@ -6,9 +6,9 @@ const filter = async (Model, req, res) => {
       message: 'filter not provided correctly',
     });
   }
-  const result = await Model.find({
-    removed: false,
-  })
+  const query = { removed: false };
+  if (req.storeId && Model.schema.paths.store) query.store = req.storeId;
+  const result = await Model.find(query)
     .where(req.query.filter)
     .equals(req.query.equal)
     .exec();

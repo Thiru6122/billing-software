@@ -1,7 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { logAudit } = require('@/services/auditService');
 
-const authUser = async (req, res, { user, databasePassword, password, UserPasswordModel }) => {
+const authUser = async (req, res, { user, databasePassword, password, UserPasswordModel, store }) => {
   const isMatch = await bcrypt.compare(databasePassword.salt + password, databasePassword.password);
 
   if (!isMatch)
@@ -12,10 +13,9 @@ const authUser = async (req, res, { user, databasePassword, password, UserPasswo
     });
 
   if (isMatch === true) {
+    const storeId = store ? store._id : (user.store && (user.store._id || user.store));
     const token = jwt.sign(
-      {
-        id: user._id,
-      },
+      { id: user._id, storeId: storeId ? String(storeId) : undefined },
       process.env.JWT_SECRET,
       { expiresIn: req.body.remember ? 365 * 24 + 'h' : '24h' }
     );
@@ -23,20 +23,30 @@ const authUser = async (req, res, { user, databasePassword, password, UserPasswo
     await UserPasswordModel.findOneAndUpdate(
       { user: user._id },
       { $push: { loggedSessions: token } },
-      {
-        new: true,
-      }
+      { new: true }
     ).exec();
 
-    // .cookie(`token_${user.cloud}`, token, {
-    //     maxAge: req.body.remember ? 365 * 24 * 60 * 60 * 1000 : null,
-    //     sameSite: 'None',
-    //     httpOnly: true,
-    //     secure: true,
-    //     domain: req.hostname,
-    //     path: '/',
-    //     Partitioned: true,
-    //   })
+    logAudit({
+      userId: user._id,
+      email: user.email,
+      role: user.role,
+      action: 'login',
+      resource: 'auth',
+      ip: req.ip || req.connection?.remoteAddress,
+      userAgent: req.get('user-agent'),
+      requestId: req.id,
+    }).catch(() => {});
+
+    const storeInfo = store
+      ? {
+          _id: store._id,
+          name: store.name,
+          slug: store.slug,
+          subscriptionPlan: store.subscriptionPlan,
+          subscriptionStatus: store.subscriptionStatus,
+        }
+      : undefined;
+
     res.status(200).json({
       success: true,
       result: {
@@ -46,10 +56,11 @@ const authUser = async (req, res, { user, databasePassword, password, UserPasswo
         role: user.role,
         email: user.email,
         photo: user.photo,
-        token: token,
+        token,
+        store: storeInfo,
         maxAge: req.body.remember ? 365 : null,
       },
-      message: 'Successfully login user',
+      message: 'Successfully logged in',
     });
   } else {
     return res.status(403).json({

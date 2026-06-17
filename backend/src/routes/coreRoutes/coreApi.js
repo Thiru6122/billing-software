@@ -1,17 +1,25 @@
 const express = require('express');
 
 const { catchErrors } = require('@/handlers/errorHandlers');
+const { requirePermission, RESOURCES } = require('@/middlewares/requirePermission');
+const { ACTIONS } = require('@/config/permissions');
 
 const router = express.Router();
 
 const adminController = require('@/controllers/coreControllers/adminController');
+const adminManagementController = require('@/controllers/coreControllers/adminManagementController');
 const settingController = require('@/controllers/coreControllers/settingController');
+const auditLogController = require('@/controllers/coreControllers/auditLogController');
 
 const { singleStorageUpload } = require('@/middlewares/uploadMiddleware');
 
-// //_______________________________ Admin management_______________________________
+// //_______________________________ Admin management _______________________________
 
+router.route('/admin/list').get(catchErrors(adminManagementController.list));
+router.route('/admin/create').post(catchErrors(adminManagementController.create));
 router.route('/admin/read/:id').get(catchErrors(adminController.read));
+router.route('/admin/update/:id').patch(catchErrors(adminManagementController.update));
+router.route('/admin/delete/:id').delete(catchErrors(adminManagementController.remove));
 
 router.route('/admin/password-update/:id').patch(catchErrors(adminController.updatePassword));
 
@@ -51,4 +59,10 @@ router
     catchErrors(settingController.updateBySettingKey)
   );
 router.route('/setting/updateManySetting').patch(catchErrors(settingController.updateManySetting));
+
+// Enterprise: Audit log (permission-protected)
+router
+  .route('/auditlog/list')
+  .get(requirePermission(RESOURCES.auditLog, ACTIONS.list), catchErrors(auditLogController.list));
+
 module.exports = router;

@@ -21,11 +21,11 @@ const updateBySettingKey = async (req, res) => {
       message: 'No settingValue provided ',
     });
   }
+  const filterQuery = { settingKey };
+  if (req.storeId) filterQuery.store = req.storeId;
   const result = await Model.findOneAndUpdate(
-    { settingKey },
-    {
-      settingValue,
-    },
+    filterQuery,
+    { settingValue },
     {
       new: true, // return the new result instead of the old one
       runValidators: true,

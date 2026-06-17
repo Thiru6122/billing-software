@@ -9,64 +9,74 @@ mongoose.connect(process.env.DATABASE);
 
 async function setupApp() {
   try {
+    const Store = require('../models/coreModels/Store');
     const Admin = require('../models/coreModels/Admin');
     const AdminPassword = require('../models/coreModels/AdminPassword');
+    const Setting = require('../models/coreModels/Setting');
+    const PaymentMode = require('../models/appModels/PaymentMode');
+    const Taxes = require('../models/appModels/Taxes');
+
+    const store = await Store.findOneAndUpdate(
+      { slug: 'main' },
+      {
+        name: 'Main Store',
+        slug: 'main',
+        subscriptionPlan: 'professional',
+        subscriptionStatus: 'active',
+        removed: false,
+      },
+      { upsert: true, new: true }
+    );
+    console.log('👍 Store created : Done! (slug: main)');
+
     const newAdminPassword = new AdminPassword();
-
     const salt = uniqueId();
-
     const passwordHash = newAdminPassword.generateHash(salt, 'admin123');
 
     const demoAdmin = {
       email: 'admin@admin.com',
-      name: 'IDURAR',
+      name: 'Saltum',
       surname: 'Admin',
       enabled: true,
       role: 'owner',
+      store: store._id,
     };
     const result = await new Admin(demoAdmin).save();
 
-    const AdminPasswordData = {
+    await new AdminPassword({
       password: passwordHash,
       emailVerified: true,
-      salt: salt,
+      salt,
       user: result._id,
-    };
-    await new AdminPassword(AdminPasswordData).save();
-
-    console.log('👍 Admin created : Done!');
-
-    const Setting = require('../models/coreModels/Setting');
+    }).save();
+    console.log('👍 Admin created : Done! (Login: admin@admin.com / Store: main)');
 
     const settingFiles = [];
-
     const settingsFiles = globSync('./src/setup/defaultSettings/**/*.json');
-
     for (const filePath of settingsFiles) {
       const file = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
       settingFiles.push(...file);
     }
-
-    await Setting.insertMany(settingFiles);
-
+    const settingsWithStore = settingFiles.map((s) => ({ ...s, store: store._id }));
+    await Setting.insertMany(settingsWithStore);
     console.log('👍 Settings created : Done!');
 
-    const PaymentMode = require('../models/appModels/PaymentMode');
-    const Taxes = require('../models/appModels/Taxes');
-
-    await Taxes.insertMany([{ taxName: 'Tax 0%', taxValue: '0', isDefault: true }]);
+    await Taxes.insertMany([
+      { taxName: 'Tax 0%', taxValue: 0, isDefault: true, store: store._id },
+    ]);
     console.log('👍 Taxes created : Done!');
 
     await PaymentMode.insertMany([
       {
         name: 'Default Payment',
-        description: 'Default Payment Mode (Cash , Wire Transfert)',
+        description: 'Default Payment Mode (Cash, Wire Transfer)',
         isDefault: true,
+        store: store._id,
       },
     ]);
     console.log('👍 PaymentMode created : Done!');
 
-    console.log('🥳 Setup completed :Success!');
+    console.log('🥳 Setup completed! Login with Store: main, Email: admin@admin.com, Password: admin123');
     process.exit();
   } catch (e) {
     console.log('\n🚫 Error! The Error info is below');

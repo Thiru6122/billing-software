@@ -46,8 +46,8 @@ const create = async (req, res) => {
 
   body['paymentStatus'] = paymentStatus;
   body['createdBy'] = req.admin._id;
+  if (req.storeId) body['store'] = req.storeId;
 
-  // Creating a new document in the collection
   const result = await new Model(body).save();
   const fileId = 'invoice-' + result._id + '.pdf';
   const updateResult = await Model.findOneAndUpdate(
@@ -59,9 +59,7 @@ const create = async (req, res) => {
   ).exec();
   // Returning successfull response
 
-  increaseBySettingKey({
-    settingKey: 'last_invoice_number',
-  });
+  increaseBySettingKey({ settingKey: 'last_invoice_number', storeId: req.storeId });
 
   // Returning successfull response
   return res.status(200).json({
