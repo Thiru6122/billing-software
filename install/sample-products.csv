@@ -1,0 +1,4 @@
+name,sku,quantity,price,cost,barcode,unit,minQuantity,category
+Rice 5kg,RICE-5KG,50,450,380,8901001001,bag,10,Grocery
+Cooking Oil 1L,OIL-1L,30,180,140,8901001002,bottle,5,Grocery
+Notebook A4,NOTE-A4,100,35,22,8901001003,pcs,20,Stationery

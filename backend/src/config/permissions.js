@@ -14,6 +14,7 @@ const ROLES = {
 const RESOURCES = {
   dashboard: 'dashboard',
   client: 'client',
+  product: 'product',
   invoice: 'invoice',
   quote: 'quote',
   payment: 'payment',
@@ -34,6 +35,7 @@ const ROLE_PERMISSIONS = {
   [ROLES.owner]: {
     [RESOURCES.dashboard]: [ACTIONS.read, ACTIONS.list],
     [RESOURCES.client]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.delete, ACTIONS.list],
+    [RESOURCES.product]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.delete, ACTIONS.list, ACTIONS.manage],
     [RESOURCES.invoice]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.delete, ACTIONS.list, ACTIONS.manage],
     [RESOURCES.quote]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.delete, ACTIONS.list, ACTIONS.manage],
     [RESOURCES.payment]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.delete, ACTIONS.list],
@@ -46,6 +48,7 @@ const ROLE_PERMISSIONS = {
   [ROLES.admin]: {
     [RESOURCES.dashboard]: [ACTIONS.read, ACTIONS.list],
     [RESOURCES.client]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.delete, ACTIONS.list],
+    [RESOURCES.product]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.delete, ACTIONS.list, ACTIONS.manage],
     [RESOURCES.invoice]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.delete, ACTIONS.list, ACTIONS.manage],
     [RESOURCES.quote]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.delete, ACTIONS.list, ACTIONS.manage],
     [RESOURCES.payment]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.delete, ACTIONS.list],
@@ -58,6 +61,7 @@ const ROLE_PERMISSIONS = {
   [ROLES.manager]: {
     [RESOURCES.dashboard]: [ACTIONS.read, ACTIONS.list],
     [RESOURCES.client]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.list],
+    [RESOURCES.product]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.list, ACTIONS.manage],
     [RESOURCES.invoice]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.list, ACTIONS.manage],
     [RESOURCES.quote]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.list, ACTIONS.manage],
     [RESOURCES.payment]: [ACTIONS.read, ACTIONS.list],
@@ -70,6 +74,7 @@ const ROLE_PERMISSIONS = {
   [ROLES.accountant]: {
     [RESOURCES.dashboard]: [ACTIONS.read, ACTIONS.list],
     [RESOURCES.client]: [ACTIONS.read, ACTIONS.list],
+    [RESOURCES.product]: [ACTIONS.read, ACTIONS.list],
     [RESOURCES.invoice]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.list, ACTIONS.manage],
     [RESOURCES.quote]: [ACTIONS.read, ACTIONS.list],
     [RESOURCES.payment]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.list],
@@ -82,6 +87,7 @@ const ROLE_PERMISSIONS = {
   [ROLES.sales]: {
     [RESOURCES.dashboard]: [ACTIONS.read, ACTIONS.list],
     [RESOURCES.client]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.list],
+    [RESOURCES.product]: [ACTIONS.read, ACTIONS.list],
     [RESOURCES.invoice]: [ACTIONS.read, ACTIONS.list],
     [RESOURCES.quote]: [ACTIONS.create, ACTIONS.read, ACTIONS.update, ACTIONS.list, ACTIONS.manage],
     [RESOURCES.payment]: [ACTIONS.read, ACTIONS.list],
@@ -94,6 +100,7 @@ const ROLE_PERMISSIONS = {
   [ROLES.viewer]: {
     [RESOURCES.dashboard]: [ACTIONS.read, ACTIONS.list],
     [RESOURCES.client]: [ACTIONS.read, ACTIONS.list],
+    [RESOURCES.product]: [ACTIONS.read, ACTIONS.list],
     [RESOURCES.invoice]: [ACTIONS.read, ACTIONS.list],
     [RESOURCES.quote]: [ACTIONS.read, ACTIONS.list],
     [RESOURCES.payment]: [ACTIONS.read, ACTIONS.list],

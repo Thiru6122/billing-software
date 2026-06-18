@@ -23,6 +23,7 @@ export default function ReadItem({ config }) {
 
   if (fields) readColumns = [...dataForRead({ fields: fields, translate: translate })];
   useEffect(() => {
+    if (!readColumns) return;
     const list = [];
     readColumns.map((props) => {
       const propsKey = props.dataIndex;

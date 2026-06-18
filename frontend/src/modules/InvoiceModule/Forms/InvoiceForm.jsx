@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import { Form, Input, InputNumber, Button, Select, Divider, Row, Col } from 'antd';
 
@@ -7,6 +7,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { DatePicker } from 'antd';
 
 import AutoCompleteAsync from '@/components/AutoCompleteAsync';
+import InvoiceBarcodeScanner from '@/components/InvoiceBarcodeScanner';
 
 import ItemRow from '@/modules/ErpPanelModule/ItemRow';
 
@@ -57,25 +58,16 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
     setTotal(Number.parseFloat(currentTotal));
   }, [subTotal, taxRate]);
 
-  const addField = useRef(false);
-
-  useEffect(() => {
-    addField.current.click();
-  }, []);
-
   return (
     <>
       <Row gutter={[12, 0]}>
         <Col className="gutter-row" span={8}>
-          <Form.Item
-            name="client"
-            label={translate('Client')}
-            rules={[
-              {
-                required: true,
-              },
-            ]}
-          >
+          <Form.Item name="customerName" label={translate('customer_name')}>
+            <Input placeholder={translate('customer_name_optional')} allowClear />
+          </Form.Item>
+        </Col>
+        <Col className="gutter-row" span={8}>
+          <Form.Item name="client" label={translate('saved_client_optional')}>
             <AutoCompleteAsync
               entity={'client'}
               displayLabels={['name']}
@@ -174,39 +166,35 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
       </Row>
       <Divider dashed />
       <Row gutter={[12, 12]} style={{ position: 'relative' }}>
-        <Col className="gutter-row" span={5}>
+        <Col className="gutter-row" span={6}>
           <p>{translate('Item')}</p>
         </Col>
-        <Col className="gutter-row" span={7}>
-          <p>{translate('Description')}</p>
+        <Col className="gutter-row" span={6}>
+          <p>{translate('description')}</p>
         </Col>
         <Col className="gutter-row" span={3}>
-          <p>{translate('Quantity')}</p>{' '}
+          <p>{translate('Quantity')}</p>
         </Col>
         <Col className="gutter-row" span={4}>
-          <p>{translate('Price')}</p>
+          <p>{translate('price')}</p>
         </Col>
-        <Col className="gutter-row" span={5}>
+        <Col className="gutter-row" span={4}>
           <p>{translate('Total')}</p>
         </Col>
       </Row>
       <Form.List name="items">
         {(fields, { add, remove }) => (
           <>
+            <InvoiceBarcodeScanner add={add} />
             {fields.map((field) => (
-              <ItemRow key={field.key} remove={remove} field={field} current={current}></ItemRow>
+              <ItemRow
+                key={field.key}
+                remove={remove}
+                field={field}
+                current={current}
+                scanOnly={true}
+              />
             ))}
-            <Form.Item>
-              <Button
-                type="dashed"
-                onClick={() => add()}
-                block
-                icon={<PlusOutlined />}
-                ref={addField}
-              >
-                {translate('Add field')}
-              </Button>
-            </Form.Item>
           </>
         )}
       </Form.List>

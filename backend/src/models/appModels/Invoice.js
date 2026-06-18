@@ -28,8 +28,11 @@ const invoiceSchema = new mongoose.Schema({
   client: {
     type: mongoose.Schema.ObjectId,
     ref: 'Client',
-    required: true,
     autopopulate: true,
+  },
+  customerName: {
+    type: String,
+    trim: true,
   },
   converted: {
     from: {
@@ -47,11 +50,7 @@ const invoiceSchema = new mongoose.Schema({
   },
   items: [
     {
-      // product: {
-      //   type: mongoose.Schema.ObjectId,
-      //   ref: 'Product',
-      //   // required: true,
-      // },
+      product: { type: mongoose.Schema.ObjectId, ref: 'Product' },
       itemName: {
         type: String,
         required: true,
@@ -147,6 +146,7 @@ const invoiceSchema = new mongoose.Schema({
     enum: ['draft', 'pending', 'sent', 'refunded', 'cancelled', 'on hold'],
     default: 'draft',
   },
+  stockDeducted: { type: Boolean, default: false },
   pdf: {
     type: String,
   },

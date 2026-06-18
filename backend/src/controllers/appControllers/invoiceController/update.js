@@ -6,6 +6,13 @@ const custom = require('@/controllers/pdfController');
 
 const { calculate } = require('@/helpers');
 const schema = require('./schemaValidate');
+const {
+  checkInvoiceStock,
+  deductInvoiceStock,
+  restoreInvoiceStock,
+  shouldDeductStock,
+  shouldRestoreStock,
+} = require('@/services/stockService');
 
 const update = async (req, res) => {
   let body = req.body;
@@ -67,9 +74,40 @@ const update = async (req, res) => {
     calculate.sub(total, discount) === credit ? 'paid' : credit > 0 ? 'partially' : 'unpaid';
   body['paymentStatus'] = paymentStatus;
 
+  if (!body.client || body.client === '') {
+    delete body.client;
+  }
+  if (body.customerName) {
+    body.customerName = String(body.customerName).trim();
+    if (!body.customerName) delete body.customerName;
+  }
+
+  if (shouldRestoreStock(body) && previousInvoice.stockDeducted) {
+    await restoreInvoiceStock(previousInvoice, req.storeId, req.admin._id);
+  }
+
+  const willDeduct =
+    shouldDeductStock(body) && !previousInvoice.stockDeducted && !shouldRestoreStock(body);
+
+  if (willDeduct) {
+    const stockErrors = await checkInvoiceStock(items, req.storeId);
+    if (stockErrors.length) {
+      return res.status(400).json({
+        success: false,
+        result: null,
+        message: stockErrors.join('; '),
+      });
+    }
+  }
+
   const result = await Model.findOneAndUpdate({ _id: req.params.id, removed: false }, body, {
     new: true, // return the new result instead of the old one
   }).exec();
+
+  if (willDeduct) {
+    await deductInvoiceStock(result, req.storeId, req.admin._id);
+    result.stockDeducted = true;
+  }
 
   // Returning successfull response
 

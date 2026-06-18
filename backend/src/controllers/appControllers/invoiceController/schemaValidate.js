@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const schema = Joi.object({
-  client: Joi.alternatives().try(Joi.string(), Joi.object()).required(),
+  client: Joi.alternatives().try(Joi.string(), Joi.object()).allow('', null).optional(),
+  customerName: Joi.string().allow('', null).optional(),
   number: Joi.number().required(),
   year: Joi.number().required(),
   status: Joi.string().required(),
@@ -12,6 +13,7 @@ const schema = Joi.object({
     .items(
       Joi.object({
         _id: Joi.string().allow('').optional(),
+        product: Joi.string().allow('').optional(),
         itemName: Joi.string().required(),
         description: Joi.string().allow(''),
         quantity: Joi.number().required(),

@@ -235,10 +235,16 @@ export default function ReadItem({ config, selectedItem }) {
         </Row>
       </PageHeader>
       <Divider dashed />
-      <Descriptions title={`Client : ${currentErp.client.name}`}>
-        <Descriptions.Item label={translate('Address')}>{client.address}</Descriptions.Item>
-        <Descriptions.Item label={translate('email')}>{client.email}</Descriptions.Item>
-        <Descriptions.Item label={translate('Phone')}>{client.phone}</Descriptions.Item>
+      <Descriptions title={`${translate('Client')} : ${currentErp.customerName || currentErp.client?.name || translate('walk_in_customer')}`}>
+        {currentErp.client ? (
+          <>
+            <Descriptions.Item label={translate('Address')}>{client.address}</Descriptions.Item>
+            <Descriptions.Item label={translate('email')}>{client.email}</Descriptions.Item>
+            <Descriptions.Item label={translate('Phone')}>{client.phone}</Descriptions.Item>
+          </>
+        ) : currentErp.customerName ? null : (
+          <Descriptions.Item label={translate('note')}>{translate('walk_in_customer')}</Descriptions.Item>
+        )}
       </Descriptions>
       <Divider />
       <Row gutter={[12, 0]}>

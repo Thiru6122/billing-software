@@ -5,6 +5,11 @@ const Model = mongoose.model('Invoice');
 const { calculate } = require('@/helpers');
 const { increaseBySettingKey } = require('@/middlewares/settings');
 const schema = require('./schemaValidate');
+const {
+  checkInvoiceStock,
+  deductInvoiceStock,
+  shouldDeductStock,
+} = require('@/services/stockService');
 
 const create = async (req, res) => {
   let body = req.body;
@@ -48,6 +53,25 @@ const create = async (req, res) => {
   body['createdBy'] = req.admin._id;
   if (req.storeId) body['store'] = req.storeId;
 
+  if (!body.client || body.client === '') {
+    delete body.client;
+  }
+  if (body.customerName) {
+    body.customerName = String(body.customerName).trim();
+    if (!body.customerName) delete body.customerName;
+  }
+
+  if (shouldDeductStock(body)) {
+    const stockErrors = await checkInvoiceStock(items, req.storeId);
+    if (stockErrors.length) {
+      return res.status(400).json({
+        success: false,
+        result: null,
+        message: stockErrors.join('; '),
+      });
+    }
+  }
+
   const result = await new Model(body).save();
   const fileId = 'invoice-' + result._id + '.pdf';
   const updateResult = await Model.findOneAndUpdate(
@@ -57,7 +81,11 @@ const create = async (req, res) => {
       new: true,
     }
   ).exec();
-  // Returning successfull response
+
+  if (shouldDeductStock(body)) {
+    await deductInvoiceStock(updateResult, req.storeId, req.admin._id);
+    updateResult.stockDeducted = true;
+  }
 
   increaseBySettingKey({ settingKey: 'last_invoice_number', storeId: req.storeId });
 

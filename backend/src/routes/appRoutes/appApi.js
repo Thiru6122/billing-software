@@ -23,6 +23,14 @@ const routerApp = (entity, controller) => {
   if (entity === 'quote') {
     router.route(`/${entity}/convert/:id`).get(catchErrors(controller['convert']));
   }
+
+  if (entity === 'product') {
+    router.route(`/${entity}/barcode/:code`).get(catchErrors(controller['lookupByBarcode']));
+    router.route(`/${entity}/generateBarcodes`).post(catchErrors(controller['generateBarcodes']));
+    router.route(`/${entity}/inventorySummary`).get(catchErrors(controller['inventorySummary']));
+    router.route(`/${entity}/adjustStock`).post(catchErrors(controller['adjustStock']));
+    router.route(`/${entity}/import`).post(catchErrors(controller['importProducts']));
+  }
 };
 
 routesList.forEach(({ entity, controllerName }) => {

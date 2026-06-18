@@ -24,6 +24,9 @@ const PaymentUpdate = lazy(() => import('@/pages/Payment/PaymentUpdate'));
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const PaymentMode = lazy(() => import('@/pages/PaymentMode'));
 const Taxes = lazy(() => import('@/pages/Taxes'));
+const Product = lazy(() => import('@/pages/Product'));
+const Inventory = lazy(() => import('@/pages/Inventory'));
+const Barcodes = lazy(() => import('@/pages/Barcodes'));
 
 const Profile = lazy(() => import('@/pages/Profile'));
 
@@ -51,6 +54,18 @@ let routes = {
     {
       path: '/customer',
       element: <Customer />,
+    },
+    {
+      path: '/product',
+      element: <Product />,
+    },
+    {
+      path: '/inventory',
+      element: <Inventory />,
+    },
+    {
+      path: '/barcodes',
+      element: <Barcodes />,
     },
 
     {

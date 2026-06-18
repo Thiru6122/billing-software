@@ -83,6 +83,13 @@ export default function UpdateItem({ config, UpdateForm }) {
   const onSubmit = (fieldsValue) => {
     let dataToUpdate = { ...fieldsValue };
     if (fieldsValue) {
+      if (!dataToUpdate.client) {
+        delete dataToUpdate.client;
+      }
+      if (dataToUpdate.customerName) {
+        dataToUpdate.customerName = dataToUpdate.customerName.trim();
+        if (!dataToUpdate.customerName) delete dataToUpdate.customerName;
+      }
       if (fieldsValue.date || fieldsValue.expiredDate) {
         dataToUpdate.date = dayjs(fieldsValue.date).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
         dataToUpdate.expiredDate = dayjs(fieldsValue.expiredDate).format(
@@ -91,11 +98,13 @@ export default function UpdateItem({ config, UpdateForm }) {
       }
       if (fieldsValue.items) {
         let newList = [];
-        fieldsValue.items.map((item) => {
-          const { quantity, price, itemName, description } = item;
-          const total = item.quantity * item.price;
-          newList.push({ total, quantity, price, itemName, description });
-        });
+        fieldsValue.items
+          .filter((item) => item && item.itemName)
+          .map((item) => {
+            const { quantity, price, itemName, description, product } = item;
+            const total = item.quantity * item.price;
+            newList.push({ total, quantity, price, itemName, description, product });
+          });
         dataToUpdate.items = newList;
       }
     }

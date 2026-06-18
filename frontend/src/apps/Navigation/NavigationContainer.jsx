@@ -11,6 +11,7 @@ import logoText from '@/style/images/logo-text.svg';
 import useResponsive from '@/hooks/useResponsive';
 
 import {
+  BarcodeOutlined,
   SettingOutlined,
   CustomerServiceOutlined,
   ContainerOutlined,
@@ -58,6 +59,21 @@ function Sidebar({ collapsible, isMobile = false }) {
       key: 'customer',
       icon: <CustomerServiceOutlined />,
       label: <Link to={'/customer'}>{translate('customers')}</Link>,
+    },
+    {
+      key: 'product',
+      icon: <TagOutlined />,
+      label: <Link to={'/product'}>{translate('products')}</Link>,
+    },
+    {
+      key: 'inventory',
+      icon: <TagsOutlined />,
+      label: <Link to={'/inventory'}>{translate('inventory')}</Link>,
+    },
+    {
+      key: 'barcodes',
+      icon: <BarcodeOutlined />,
+      label: <Link to={'/barcodes'}>{translate('bulk_barcode_print')}</Link>,
     },
 
     {

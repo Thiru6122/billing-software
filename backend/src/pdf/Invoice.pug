@@ -285,10 +285,15 @@ html
         .right.col-10
             .billTo
                 p #{translate('Client')} :
-                p #{model.client.name}
-                p #{model.client.address}
-                p #{model.client.phone}
-                p #{model.client.email}
+                if model.customerName
+                  p #{model.customerName}
+                else if model.client
+                  p #{model.client.name}
+                  p #{model.client.address}
+                  p #{model.client.phone}
+                  p #{model.client.email}
+                else
+                  p Walk-in Customer
         .col.col-24
           .space  
       main

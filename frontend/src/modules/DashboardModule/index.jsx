@@ -48,6 +48,10 @@ export default function DashboardModule() {
     request.summary({ entity: 'client' })
   );
 
+  const { result: productResult, isLoading: productLoading } = useFetch(() =>
+    request.summary({ entity: 'product' })
+  );
+
   useEffect(() => {
     const currency = money_format_settings.default_currency_code || null;
 
@@ -151,6 +155,12 @@ export default function DashboardModule() {
             prefix={translate('Not Paid')}
             isLoading={invoiceLoading}
             data={invoiceResult?.total_undue}
+          />
+          <SummaryCard
+            title={translate('low_stock_items')}
+            prefix={translate('inventory')}
+            isLoading={productLoading}
+            data={productResult?.lowStock}
           />
         </Row>
         <div className="space30"></div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { Button, Tag, Form, Divider } from 'antd';
+import { Button, Tag, Form, Divider, message } from 'antd';
 import { PageHeader } from '@ant-design/pro-layout';
 
 import { useSelector, useDispatch } from 'react-redux';
@@ -87,10 +87,16 @@ export default function CreateItem({ config, CreateForm }) {
   }, [isSuccess]);
 
   const onSubmit = (fieldsValue) => {
-    console.log('🚀 ~ onSubmit ~ fieldsValue:', fieldsValue);
     if (fieldsValue) {
+      if (!fieldsValue.client) {
+        delete fieldsValue.client;
+      }
+      if (fieldsValue.customerName) {
+        fieldsValue.customerName = fieldsValue.customerName.trim();
+        if (!fieldsValue.customerName) delete fieldsValue.customerName;
+      }
       if (fieldsValue.items) {
-        let newList = [...fieldsValue.items];
+        let newList = [...fieldsValue.items].filter((item) => item && item.itemName);
         newList.map((item) => {
           item.total = calculate.multiply(item.quantity, item.price);
         });
@@ -98,6 +104,10 @@ export default function CreateItem({ config, CreateForm }) {
           ...fieldsValue,
           items: newList,
         };
+      }
+      if (entity === 'invoice' && (!fieldsValue.items || fieldsValue.items.length === 0)) {
+        message.error(translate('scan_at_least_one_product'));
+        return;
       }
     }
     dispatch(erp.create({ entity, jsonData: fieldsValue }));

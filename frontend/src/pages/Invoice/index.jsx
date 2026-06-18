@@ -25,7 +25,8 @@ export default function Invoice() {
     },
     {
       title: translate('Client'),
-      dataIndex: ['client', 'name'],
+      dataIndex: 'customerName',
+      render: (_, record) => record.customerName || record.client?.name || '—',
     },
     {
       title: translate('Date'),
