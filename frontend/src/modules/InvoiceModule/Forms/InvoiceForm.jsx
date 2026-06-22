@@ -243,7 +243,7 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
                 withRedirect={true}
                 urlToRedirect="/taxes"
                 redirectLabel={translate('Add New Tax')}
-                placeholder={translate('Select Tax Value')}
+                placeholder="Select GST %"
               />
             </Form.Item>
           </Col>
@@ -251,6 +251,30 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
             <MoneyInputFormItem readOnly value={taxTotal} />
           </Col>
         </Row>
+        {taxTotal > 0 && (
+          <>
+            <Row gutter={[12, -5]}>
+              <Col className="gutter-row" span={4} offset={15}>
+                <p style={{ paddingLeft: '12px', paddingTop: '5px', margin: 0, textAlign: 'right' }}>
+                  CGST ({(taxRate * 100) / 2}%) :
+                </p>
+              </Col>
+              <Col className="gutter-row" span={5}>
+                <MoneyInputFormItem readOnly value={taxTotal / 2} />
+              </Col>
+            </Row>
+            <Row gutter={[12, -5]}>
+              <Col className="gutter-row" span={4} offset={15}>
+                <p style={{ paddingLeft: '12px', paddingTop: '5px', margin: 0, textAlign: 'right' }}>
+                  SGST ({(taxRate * 100) / 2}%) :
+                </p>
+              </Col>
+              <Col className="gutter-row" span={5}>
+                <MoneyInputFormItem readOnly value={taxTotal / 2} />
+              </Col>
+            </Row>
+          </>
+        )}
         <Row gutter={[12, -5]}>
           <Col className="gutter-row" span={4} offset={15}>
             <p

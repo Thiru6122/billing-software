@@ -8,10 +8,12 @@ const fs = require('fs');
 const cookieParser = require('cookie-parser');
 
 const coreAuthRouter = require('./routes/coreRoutes/coreAuth');
+const coreLicenseRouter = require('./routes/coreRoutes/coreLicense');
 const coreApiRouter = require('./routes/coreRoutes/coreApi');
 const coreDownloadRouter = require('./routes/coreRoutes/coreDownloadRouter');
 const corePublicRouter = require('./routes/coreRoutes/corePublicRouter');
 const adminAuth = require('./controllers/coreControllers/adminAuth');
+const licenseLockMiddleware = require('./middleware/licenseLockMiddleware');
 
 const errorHandlers = require('./handlers/errorHandlers');
 const erpApiRouter = require('./routes/appRoutes/appApi');
@@ -39,8 +41,9 @@ app.use(compression());
 // Here our API Routes
 
 app.use('/api', coreAuthRouter);
-app.use('/api', adminAuth.isValidAuthToken, coreApiRouter);
-app.use('/api', adminAuth.isValidAuthToken, erpApiRouter);
+app.use('/api', coreLicenseRouter);
+app.use('/api', adminAuth.isValidAuthToken, licenseLockMiddleware, coreApiRouter);
+app.use('/api', adminAuth.isValidAuthToken, licenseLockMiddleware, erpApiRouter);
 app.use('/download', coreDownloadRouter);
 app.use('/public', corePublicRouter);
 

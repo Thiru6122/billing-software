@@ -62,7 +62,11 @@ async function setupApp() {
     console.log('👍 Settings created : Done!');
 
     await Taxes.insertMany([
-      { taxName: 'Tax 0%', taxValue: 0, isDefault: true, store: store._id },
+      { taxName: 'GST 0%', taxValue: 0, isDefault: true, store: store._id },
+      { taxName: 'GST 5%', taxValue: 5, isDefault: false, store: store._id },
+      { taxName: 'GST 12%', taxValue: 12, isDefault: false, store: store._id },
+      { taxName: 'GST 18%', taxValue: 18, isDefault: false, store: store._id },
+      { taxName: 'GST 28%', taxValue: 28, isDefault: false, store: store._id },
     ]);
     console.log('👍 Taxes created : Done!');
 

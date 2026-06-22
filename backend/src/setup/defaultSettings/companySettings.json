@@ -55,6 +55,12 @@
   },
   {
     "settingCategory": "company_settings",
+    "settingKey": "company_gstin",
+    "settingValue": "",
+    "valueType": "string"
+  },
+  {
+    "settingCategory": "company_settings",
     "settingKey": "company_tax_number",
     "settingValue": "91231255234",
     "valueType": "string"

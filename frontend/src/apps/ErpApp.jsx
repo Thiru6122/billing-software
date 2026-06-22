@@ -1,16 +1,14 @@
-import { useLayoutEffect } from 'react';
-import { useEffect } from 'react';
-import { selectAppSettings } from '@/redux/settings/selectors';
+import { useLayoutEffect, useState, useCallback } from 'react';
+import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { Layout } from 'antd';
-
-import { useAppContext } from '@/context/appContext';
 
 import Navigation from '@/apps/Navigation/NavigationContainer';
 
 import HeaderContent from '@/apps/Header/HeaderContainer';
 import PageLoader from '@/components/PageLoader';
+import LicenseLockScreen from '@/components/LicenseLockScreen';
 
 import { settingsAction } from '@/redux/settings/actions';
 
@@ -20,36 +18,45 @@ import AppRouter from '@/router/AppRouter';
 
 import useResponsive from '@/hooks/useResponsive';
 
-import storePersist from '@/redux/storePersist';
+import { API_BASE_URL } from '@/config/serverApiConfig';
 
 export default function ErpCrmApp() {
   const { Content } = Layout;
 
-  // const { state: stateApp, appContextAction } = useAppContext();
-  // // const { app } = appContextAction;
-  // const { isNavMenuClose, currentApp } = stateApp;
-
   const { isMobile } = useResponsive();
-
   const dispatch = useDispatch();
+  const [licenseLocked, setLicenseLocked] = useState(null);
+
+  const checkLicense = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`${API_BASE_URL}license/status`);
+      setLicenseLocked(Boolean(data?.result?.locked));
+    } catch {
+      setLicenseLocked(false);
+    }
+  }, []);
+
+  const handleUnlocked = useCallback(() => {
+    setLicenseLocked(false);
+    dispatch(settingsAction.list({ entity: 'setting' }));
+  }, [dispatch]);
 
   useLayoutEffect(() => {
     dispatch(settingsAction.list({ entity: 'setting' }));
-  }, []);
-
-  // const appSettings = useSelector(selectAppSettings);
+    checkLicense();
+  }, [checkLicense, dispatch]);
 
   const { isSuccess: settingIsloaded } = useSelector(selectSettings);
 
-  // useEffect(() => {
-  //   const { loadDefaultLang } = storePersist.get('firstVisit');
-  //   if (appSettings.idurar_app_language && !loadDefaultLang) {
-  //     window.localStorage.setItem('firstVisit', JSON.stringify({ loadDefaultLang: true }));
-  //   }
-  // }, [appSettings]);
+  if (licenseLocked === null) return <PageLoader />;
 
-  if (settingIsloaded)
-    return (
+  if (licenseLocked) {
+    return <LicenseLockScreen onUnlocked={handleUnlocked} />;
+  }
+
+  if (!settingIsloaded) return <PageLoader />;
+
+  return (
       <Layout hasSider>
         <Navigation />
 
@@ -86,5 +93,4 @@ export default function ErpCrmApp() {
         )}
       </Layout>
     );
-  else return <PageLoader />;
 }

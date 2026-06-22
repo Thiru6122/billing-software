@@ -51,6 +51,9 @@ export default function ProductForm({ isUpdateForm = false }) {
       <Form.Item label={translate('min_quantity')} name="minQuantity" initialValue={0}>
         <InputNumber min={0} style={{ width: '100%' }} />
       </Form.Item>
+      <Form.Item label="HSN Code" name="hsnCode">
+        <Input placeholder="e.g. 6109" maxLength={8} />
+      </Form.Item>
       <Form.Item label={translate('description')} name="description">
         <Input.TextArea rows={2} />
       </Form.Item>

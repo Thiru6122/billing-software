@@ -14,6 +14,7 @@ const productSchema = new mongoose.Schema({
   cost: { type: Number, default: 0 },
   quantity: { type: Number, default: 0, min: 0 },
   minQuantity: { type: Number, default: 0, min: 0 },
+  hsnCode: { type: String, trim: true },
   taxRate: { type: Number, default: 0 },
   created: { type: Date, default: Date.now },
   updated: { type: Date, default: Date.now },

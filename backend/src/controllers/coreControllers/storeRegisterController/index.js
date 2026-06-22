@@ -86,12 +86,13 @@ async function registerStore(req, res) {
     const settingsWithStore = settingFiles.map((s) => ({ ...s, store: store._id }));
     await Setting.insertMany(settingsWithStore);
 
-    await Taxes.create({
-      taxName: 'Tax 0%',
-      taxValue: 0,
-      isDefault: true,
-      store: store._id,
-    });
+    await Taxes.insertMany([
+      { taxName: 'GST 0%', taxValue: 0, isDefault: true, store: store._id },
+      { taxName: 'GST 5%', taxValue: 5, isDefault: false, store: store._id },
+      { taxName: 'GST 12%', taxValue: 12, isDefault: false, store: store._id },
+      { taxName: 'GST 18%', taxValue: 18, isDefault: false, store: store._id },
+      { taxName: 'GST 28%', taxValue: 28, isDefault: false, store: store._id },
+    ]);
 
     await PaymentMode.create({
       name: 'Default Payment',

@@ -34,8 +34,14 @@ const formItems = [
   },
 
   {
+    settingKey: 'company_gstin',
+    valueType: 'string',
+    label: 'GSTIN',
+  },
+  {
     settingKey: 'company_tax_number',
     valueType: 'string',
+    label: 'Tax number',
   },
   {
     settingKey: 'company_vat_number',

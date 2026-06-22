@@ -264,6 +264,10 @@ html
           .right.company-info
               p.strong #{settings.company_name}
               p #{settings.company_address}
+              if settings.company_gstin
+                p GSTIN: #{settings.company_gstin}
+              else if settings.company_tax_number
+                p GSTIN: #{settings.company_tax_number}
               p #{settings.company_reg_number}
               
         .col.col-24
@@ -315,9 +319,20 @@ html
             tr
               td(colspan='3') #{translate('SUB TOTAL')}
               td.total #{moneyFormatter({amount:model.subTotal})}
-            tr
-              td(colspan='3') #{translate('TAX')} #{model.taxRate} %
-              td.total #{moneyFormatter({amount:model.taxTotal})}
+            if model.taxRate > 0
+              tr
+                td(colspan='3') CGST @ #{model.taxRate / 2} %
+                td.total #{moneyFormatter({amount:model.taxTotal / 2})}
+              tr
+                td(colspan='3') SGST @ #{model.taxRate / 2} %
+                td.total #{moneyFormatter({amount:model.taxTotal / 2})}
+              tr
+                td(colspan='3') GST #{model.taxRate} % (Total)
+                td.total #{moneyFormatter({amount:model.taxTotal})}
+            else
+              tr
+                td(colspan='3') #{translate('TAX')} #{model.taxRate} %
+                td.total #{moneyFormatter({amount:model.taxTotal})}
             tr
               td.grand.total(colspan='3')  #{translate('TOTAL')} 
               td.grand.total #{moneyFormatter({amount:model.total})}
