@@ -1,141 +1,81 @@
 import { useEffect, useState } from 'react';
-import {
-  Table,
-  Button,
-  Card,
-  Space,
-  InputNumber,
-  message,
-  Typography,
-  Divider,
-} from 'antd';
+import { Button, Card, Space, InputNumber, message, Typography, Table, Tag, Steps } from 'antd';
 import { PrinterOutlined, BarcodeOutlined, ReloadOutlined } from '@ant-design/icons';
 import { PageHeader } from '@ant-design/pro-layout';
 import { request } from '@/request';
 import useLanguage from '@/locale/useLanguage';
-import { useMoney } from '@/settings';
-import {
-  printBarcodeLabels,
-  buildProductLabels,
-  buildBlankLabels,
-  generateBarcodeValue,
-} from '@/utils/barcodePrint';
+import { printBarcodeLabels, buildBlankLabels } from '@/utils/barcodePrint';
 
 export default function Barcodes() {
   const translate = useLanguage();
-  const { moneyFormatter } = useMoney();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [blankCount, setBlankCount] = useState(30);
+  const [labelCount, setLabelCount] = useState(30);
   const [generating, setGenerating] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [pool, setPool] = useState({ unassigned: 0, assigned: 0, recentUnassigned: [] });
 
-  const loadProducts = async () => {
+  const loadPool = async () => {
     setLoading(true);
     try {
-      const res = await request.listAll({ entity: 'product' });
-      if (res?.success) setProducts(res.result || []);
+      const res = await request.get({ entity: 'product/labelPool' });
+      if (res?.success) setPool(res.result || {});
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadProducts();
+    loadPool();
   }, []);
 
-  const selectedProducts = products.filter((p) => selectedRowKeys.includes(p._id));
-  const productsWithBarcode = selectedProducts.filter((p) => p.barcode);
-  const productsMissingBarcode = selectedProducts.filter((p) => !p.barcode);
-
-  const handleGenerateSelected = async () => {
-    if (!selectedRowKeys.length) {
-      message.warning(translate('select_products_first'));
-      return;
-    }
+  const handleGenerateAndPrint = async () => {
     setGenerating(true);
     try {
       const res = await request.post({
-        entity: 'product/generateBarcodes',
-        jsonData: { productIds: selectedRowKeys },
+        entity: 'product/generateLabelBatch',
+        jsonData: { count: labelCount },
       });
-      if (res?.success) {
-        message.success(res.message);
-        await loadProducts();
-      }
+
+      if (!res?.success || !res.result?.length) return;
+
+      message.success(res.message);
+
+      printBarcodeLabels(
+        buildBlankLabels(res.result.map((l) => l.code)),
+        translate('barcode_labels')
+      );
+
+      await loadPool();
     } finally {
       setGenerating(false);
     }
   };
 
-  const handleGenerateAllMissing = async () => {
-    setGenerating(true);
-    try {
-      const res = await request.post({
-        entity: 'product/generateBarcodes',
-        jsonData: {},
-      });
-      if (res?.success) {
-        message.success(res.message);
-        await loadProducts();
-      }
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const handlePrintSelected = () => {
-    const toPrint =
-      productsWithBarcode.length > 0
-        ? productsWithBarcode
-        : selectedProducts.filter((p) => p.barcode);
-
-    if (!toPrint.length) {
-      message.warning(translate('generate_barcode_before_print'));
-      return;
-    }
-
-    printBarcodeLabels(
-      buildProductLabels(toPrint, {
-        useMoneyFormatter: (opts) => moneyFormatter({ amount: opts.amount }),
-      }),
-      translate('barcode_labels')
-    );
-  };
-
-  const handlePrintAll = () => {
-    const withBarcode = products.filter((p) => p.barcode);
-    if (!withBarcode.length) {
-      message.warning(translate('no_products_with_barcode'));
+  const handleReprintUnassigned = () => {
+    const codes = pool.recentUnassigned || [];
+    if (!codes.length) {
+      message.warning(translate('no_unassigned_labels'));
       return;
     }
     printBarcodeLabels(
-      buildProductLabels(withBarcode, {
-        useMoneyFormatter: (opts) => moneyFormatter({ amount: opts.amount }),
-      }),
+      buildBlankLabels(codes.map((l) => l.code)),
       translate('barcode_labels')
     );
-  };
-
-  const handlePrintBlankSheet = () => {
-    const count = Math.max(1, Math.min(blankCount || 1, 200));
-    const codes = Array.from({ length: count }, () => generateBarcodeValue());
-    printBarcodeLabels(buildBlankLabels(codes), translate('blank_barcode_labels'));
-    message.info(translate('blank_barcode_print_hint'));
   };
 
   const columns = [
-    { title: translate('name'), dataIndex: 'name' },
-    { title: 'SKU', dataIndex: 'sku' },
     {
       title: translate('barcode'),
-      dataIndex: 'barcode',
-      render: (code) => code || '—',
+      dataIndex: 'code',
     },
     {
-      title: translate('price'),
-      dataIndex: 'price',
-      render: (price) => moneyFormatter({ amount: price }),
+      title: translate('status'),
+      dataIndex: 'assigned',
+      render: (assigned) =>
+        assigned ? (
+          <Tag color="green">{translate('mapped')}</Tag>
+        ) : (
+          <Tag color="blue">{translate('ready_to_paste')}</Tag>
+        ),
     },
   ];
 
@@ -145,67 +85,68 @@ export default function Barcodes() {
         title={translate('bulk_barcode_print')}
         subTitle={translate('bulk_barcode_print_subtitle')}
         extra={[
-          <Button key="refresh" icon={<ReloadOutlined />} onClick={loadProducts}>
+          <Button key="refresh" icon={<ReloadOutlined />} onClick={loadPool}>
             {translate('Refresh')}
           </Button>,
         ]}
       />
 
-      <Card title={translate('print_product_labels')} style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: 16 }}>
+        <Steps
+          direction="vertical"
+          size="small"
+          current={-1}
+          items={[
+            { title: translate('step_print_labels'), description: translate('step_print_labels_desc') },
+            { title: translate('step_paste_labels'), description: translate('step_paste_labels_desc') },
+            { title: translate('step_scan_product'), description: translate('step_scan_product_desc') },
+            { title: translate('step_scan_invoice'), description: translate('step_scan_invoice_desc') },
+          ]}
+        />
+      </Card>
+
+      <Card title={translate('step_print_labels')} style={{ marginBottom: 16 }}>
         <Typography.Paragraph type="secondary">
-          {translate('bulk_barcode_workflow')}
+          {translate('print_labels_before_products_hint')}
         </Typography.Paragraph>
-        <Space wrap style={{ marginBottom: 16 }}>
+        <Space wrap align="center">
+          <span>{translate('label_count')}:</span>
+          <InputNumber min={1} max={200} value={labelCount} onChange={setLabelCount} />
           <Button
             type="primary"
-            icon={<BarcodeOutlined />}
-            loading={generating}
-            onClick={handleGenerateSelected}
-            disabled={!selectedRowKeys.length}
-          >
-            {translate('generate_barcode_selected')}
-          </Button>
-          <Button icon={<BarcodeOutlined />} loading={generating} onClick={handleGenerateAllMissing}>
-            {translate('generate_barcode_all_missing')}
-          </Button>
-          <Button
+            size="large"
             icon={<PrinterOutlined />}
-            onClick={handlePrintSelected}
-            disabled={!selectedRowKeys.length}
+            loading={generating}
+            onClick={handleGenerateAndPrint}
           >
-            {translate('print_selected_labels')}
+            {translate('generate_and_print_labels')}
           </Button>
-          <Button icon={<PrinterOutlined />} onClick={handlePrintAll}>
-            {translate('print_all_labels')}
+          <Button icon={<PrinterOutlined />} onClick={handleReprintUnassigned}>
+            {translate('reprint_unassigned')}
           </Button>
         </Space>
-        {productsMissingBarcode.length > 0 && selectedRowKeys.length > 0 && (
-          <Typography.Text type="warning">
-            {productsMissingBarcode.length} {translate('selected_without_barcode')}
-          </Typography.Text>
-        )}
+        <div style={{ marginTop: 16 }}>
+          <Tag color="blue">
+            {translate('unassigned')}: {pool.unassigned || 0}
+          </Tag>
+          <Tag color="green" style={{ marginLeft: 8 }}>
+            {translate('mapped')}: {pool.assigned || 0}
+          </Tag>
+        </div>
+      </Card>
+
+      <Card title={translate('unassigned_label_pool')}>
+        <Typography.Paragraph type="secondary">
+          {translate('unassigned_pool_hint')}
+        </Typography.Paragraph>
         <Table
           rowKey="_id"
           loading={loading}
-          rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
-          dataSource={products}
+          dataSource={pool.recentUnassigned || []}
           columns={columns}
           pagination={{ pageSize: 10 }}
           size="small"
         />
-      </Card>
-
-      <Card title={translate('print_blank_label_sheet')}>
-        <Typography.Paragraph type="secondary">
-          {translate('blank_label_sheet_hint')}
-        </Typography.Paragraph>
-        <Space>
-          <span>{translate('label_count')}:</span>
-          <InputNumber min={1} max={200} value={blankCount} onChange={setBlankCount} />
-          <Button icon={<PrinterOutlined />} onClick={handlePrintBlankSheet}>
-            {translate('print_blank_labels')}
-          </Button>
-        </Space>
       </Card>
     </div>
   );

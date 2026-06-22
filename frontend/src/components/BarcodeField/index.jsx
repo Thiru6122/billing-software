@@ -1,12 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { Input, Button, Space } from 'antd';
-import { BarcodeOutlined, ReloadOutlined, PrinterOutlined } from '@ant-design/icons';
+import { Input } from 'antd';
+import { BarcodeOutlined } from '@ant-design/icons';
 import useLanguage from '@/locale/useLanguage';
-import { generateBarcodeValue, printBarcodeLabels, createBarcodeSvg } from '@/utils/barcodePrint';
+import { createBarcodeSvg } from '@/utils/barcodePrint';
 
-export { generateBarcodeValue };
-
-export default function BarcodeField({ value, onChange }) {
+export default function BarcodeField({ value }) {
   const translate = useLanguage();
   const svgRef = useRef(null);
 
@@ -15,30 +13,9 @@ export default function BarcodeField({ value, onChange }) {
     svgRef.current.innerHTML = createBarcodeSvg(value, { height: 70 });
   }, [value]);
 
-  const handleGenerate = () => {
-    onChange?.(generateBarcodeValue());
-  };
-
-  const handlePrint = () => {
-    if (!value) return;
-    printBarcodeLabels([{ code: value, title: '', subtitle: '' }], translate('barcode_labels'));
-  };
-
   return (
     <div>
-      <Space.Compact style={{ width: '100%', marginBottom: 8 }}>
-        <Input
-          value={value}
-          onChange={(e) => onChange?.(e.target.value)}
-          placeholder={translate('barcode')}
-        />
-        <Button icon={<ReloadOutlined />} onClick={handleGenerate}>
-          {translate('generate_barcode')}
-        </Button>
-        <Button icon={<PrinterOutlined />} onClick={handlePrint} disabled={!value}>
-          {translate('print_label')}
-        </Button>
-      </Space.Compact>
+      <Input value={value || ''} readOnly placeholder={translate('scan_barcode_to_map')} />
       {value ? (
         <div
           style={{
@@ -46,14 +23,21 @@ export default function BarcodeField({ value, onChange }) {
             padding: 12,
             textAlign: 'center',
             background: '#fafafa',
+            marginTop: 8,
           }}
         >
           <div ref={svgRef} />
           <div style={{ marginTop: 8, color: '#666', fontSize: 12 }}>
-            <BarcodeOutlined /> {translate('barcode_label_hint')}
+            <BarcodeOutlined /> {translate('barcode_mapped_hint')}
           </div>
         </div>
-      ) : null}
+      ) : (
+        <TypographyHint text={translate('barcode_scan_required_hint')} />
+      )}
     </div>
   );
+}
+
+function TypographyHint({ text }) {
+  return <p style={{ color: '#888', fontSize: 12, marginTop: 8 }}>{text}</p>;
 }

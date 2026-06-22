@@ -20,7 +20,11 @@ export default function ProductForm({ isUpdateForm = false }) {
         <Input placeholder="SKU-001" />
       </Form.Item>
       <BarcodeScanAssign />
-      <Form.Item label={translate('barcode')} name="barcode">
+      <Form.Item
+        label={translate('barcode')}
+        name="barcode"
+        rules={[{ required: true, message: translate('scan_barcode_to_map') }]}
+      >
         <BarcodeField />
       </Form.Item>
       <Form.Item label={translate('category')} name="category">

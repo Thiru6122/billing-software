@@ -1,10 +1,6 @@
 const mongoose = require('mongoose');
 const { logAudit } = require('@/services/auditService');
-
-function generateBarcode() {
-  const suffix = Math.floor(Math.random() * 900 + 100);
-  return `890${Date.now()}${suffix}`;
-}
+const { assignBarcodeToProduct } = require('@/services/barcodeLabelService');
 
 const create = async (req, res) => {
   const Model = mongoose.model('Product');
@@ -12,13 +8,34 @@ const create = async (req, res) => {
   req.body.removed = false;
   if (req.storeId && Model.schema.paths.store) req.body.store = req.storeId;
 
-  if (!req.body.barcode || !String(req.body.barcode).trim()) {
-    req.body.barcode = generateBarcode();
-  } else {
-    req.body.barcode = String(req.body.barcode).trim();
+  const barcode = String(req.body.barcode || '').trim();
+  if (!barcode) {
+    return res.status(400).json({
+      success: false,
+      result: null,
+      message: 'Scan a printed barcode label before saving the product.',
+    });
   }
+  req.body.barcode = barcode;
 
-  const result = await new Model({ ...req.body }).save();
+  let result;
+  try {
+    result = await new Model({ ...req.body }).save();
+    await assignBarcodeToProduct({
+      storeId: req.storeId,
+      barcode,
+      productId: result._id,
+    });
+  } catch (err) {
+    if (result?._id) {
+      await Model.findByIdAndDelete(result._id);
+    }
+    return res.status(400).json({
+      success: false,
+      result: null,
+      message: err.message,
+    });
+  }
 
   if (req.admin) {
     logAudit({
@@ -37,7 +54,7 @@ const create = async (req, res) => {
   return res.status(200).json({
     success: true,
     result,
-    message: 'Product created successfully',
+    message: 'Product saved and barcode mapped successfully.',
   });
 };
 

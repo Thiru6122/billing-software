@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Form, Input, InputNumber, Row, Col } from 'antd';
 
 import { DeleteOutlined } from '@ant-design/icons';
@@ -9,55 +9,38 @@ import useLanguage from '@/locale/useLanguage';
 export default function ItemRow({ field, remove, current = null, scanOnly = false }) {
   const translate = useLanguage();
   const form = Form.useFormInstance();
-  const [totalState, setTotal] = useState(0);
-  const lineItem = Form.useWatch(['items', field.name], form);
   const money = useMoney();
 
+  const quantity = Form.useWatch(['items', field.name, 'quantity'], form);
+  const price = Form.useWatch(['items', field.name, 'price'], form);
+
+  const lineTotal = Number.parseFloat(
+    calculate.multiply(Number(price) || 0, Number(quantity) || 0)
+  );
+
   useEffect(() => {
-    if (current && !lineItem) {
+    if (current) {
       const { items, invoice } = current;
       const item = invoice ? invoice[field.fieldKey] : items?.[field.fieldKey];
       if (item) {
-        syncLine(item.quantity, item.price);
+        form.setFieldValue(['items', field.name, 'quantity'], item.quantity);
+        form.setFieldValue(['items', field.name, 'price'], item.price);
       }
     }
-  }, [current]);
-
-  useEffect(() => {
-    if (lineItem) {
-      syncLine(lineItem.quantity, lineItem.price);
-    }
-  }, [lineItem?.quantity, lineItem?.price, lineItem?.itemName]);
-
-  const syncLine = (quantity, price) => {
-    const q = Number(quantity) || 0;
-    const p = Number(price) || 0;
-    const lineTotal = Number.parseFloat(calculate.multiply(p, q));
-    setTotalState(lineTotal);
-
-    const items = [...(form.getFieldValue('items') || [])];
-    if (!items[field.name]) return;
-
-    if (items[field.name].total === lineTotal && items[field.name].quantity === q) return;
-
-    items[field.name] = {
-      ...items[field.name],
-      quantity: q || 1,
-      price: p,
-      total: lineTotal,
-    };
-    form.setFieldsValue({ items });
-  };
+  }, [current, field.fieldKey, field.name, form]);
 
   const handleQuantityChange = (value) => {
     const q = value || 1;
-    const p = lineItem?.price || 0;
-    syncLine(q, p);
+    const p = form.getFieldValue(['items', field.name, 'price']) || 0;
+    form.setFieldValue(['items', field.name, 'total'], calculate.multiply(p, q));
   };
 
   return (
     <Row gutter={[12, 12]} style={{ position: 'relative' }}>
       <Form.Item name={[field.name, 'product']} hidden>
+        <Input />
+      </Form.Item>
+      <Form.Item name={[field.name, 'total']} hidden>
         <Input />
       </Form.Item>
       <Col className="gutter-row" span={scanOnly ? 6 : 4}>
@@ -96,20 +79,22 @@ export default function ItemRow({ field, remove, current = null, scanOnly = fals
         </Form.Item>
       </Col>
       <Col className="gutter-row" span={scanOnly ? 4 : 4}>
-        <Form.Item name={[field.name, 'total']}>
-          <InputNumber
-            readOnly
-            className="moneyInput"
-            value={totalState}
-            min={0}
-            controls={false}
-            addonAfter={money.currency_position === 'after' ? money.currency_symbol : undefined}
-            addonBefore={money.currency_position === 'before' ? money.currency_symbol : undefined}
-            formatter={(value) =>
-              money.amountFormatter({ amount: value, currency_code: money.currency_code })
-            }
-          />
-        </Form.Item>
+        <InputNumber
+          readOnly
+          className="moneyInput"
+          value={lineTotal}
+          min={0}
+          controls={false}
+          style={{ width: '100%' }}
+          addonAfter={money.currency_position === 'after' ? money.currency_symbol : undefined}
+          addonBefore={money.currency_position === 'before' ? money.currency_symbol : undefined}
+          formatter={(value) =>
+            money.amountFormatter({
+              amount: value ?? 0,
+              currency_code: money.currency_code,
+            })
+          }
+        />
       </Col>
 
       <div style={{ position: 'absolute', right: '-20px', top: ' 5px' }}>

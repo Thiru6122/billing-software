@@ -17,7 +17,7 @@ export default function BarcodeScanAssign() {
     if (!code) return;
 
     form.setFieldValue('barcode', code);
-    message.success(translate('barcode_assigned_save_product'));
+        message.success(translate('barcode_scanned_click_save'));
     setScanValue('');
     inputRef.current?.focus();
   };
