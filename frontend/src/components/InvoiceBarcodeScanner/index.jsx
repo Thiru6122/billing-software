@@ -5,12 +5,14 @@ import { request } from '@/request';
 import useLanguage from '@/locale/useLanguage';
 import calculate from '@/utils/calculate';
 
-function buildLineItem(product, quantity = 1) {
+function buildLineItem(product, quantity = 1, taxRate = 0) {
   const price = Number(product.price) || 0;
   const qty = Number(quantity) || 1;
   return {
     product: product._id,
     itemName: product.name,
+    hsnCode: product.hsnCode || '',
+    gstRate: Number(product.taxRate) || Number(taxRate) || 0,
     price,
     quantity: qty,
     total: Number.parseFloat(calculate.multiply(price, qty)),
@@ -18,7 +20,7 @@ function buildLineItem(product, quantity = 1) {
   };
 }
 
-export default function InvoiceBarcodeScanner({ add }) {
+export default function InvoiceBarcodeScanner({ add, taxRate = 0 }) {
   const translate = useLanguage();
   const form = Form.useFormInstance();
   const inputRef = useRef(null);
@@ -69,9 +71,9 @@ export default function InvoiceBarcodeScanner({ add }) {
           calculate.multiply(price, nextQty)
         );
       } else if (typeof add === 'function') {
-        add(buildLineItem(product, 1));
+        add(buildLineItem(product, 1, taxRate));
       } else {
-        form.setFieldValue('items', [...items, buildLineItem(product, 1)]);
+        form.setFieldValue('items', [...items, buildLineItem(product, 1, taxRate)]);
       }
 
       message.success(`${product.name} ${translate('added')}`);

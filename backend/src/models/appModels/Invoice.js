@@ -34,6 +34,20 @@ const invoiceSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  customerGstin: {
+    type: String,
+    trim: true,
+    uppercase: true,
+  },
+  placeOfSupply: {
+    type: String,
+    trim: true,
+  },
+  gstType: {
+    type: String,
+    enum: ['intra', 'inter'],
+    default: 'intra',
+  },
   converted: {
     from: {
       type: String,
@@ -54,6 +68,14 @@ const invoiceSchema = new mongoose.Schema({
       itemName: {
         type: String,
         required: true,
+      },
+      hsnCode: {
+        type: String,
+        trim: true,
+      },
+      gstRate: {
+        type: Number,
+        default: 0,
       },
       description: {
         type: String,
@@ -98,6 +120,18 @@ const invoiceSchema = new mongoose.Schema({
     default: 0,
   },
   taxTotal: {
+    type: Number,
+    default: 0,
+  },
+  cgstTotal: {
+    type: Number,
+    default: 0,
+  },
+  sgstTotal: {
+    type: Number,
+    default: 0,
+  },
+  igstTotal: {
     type: Number,
     default: 0,
   },

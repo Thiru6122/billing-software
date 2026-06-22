@@ -3,8 +3,9 @@ const mongoose = require('mongoose');
 const Model = mongoose.model('Invoice');
 
 const { calculate } = require('@/helpers');
-const { increaseBySettingKey } = require('@/middlewares/settings');
+const { increaseBySettingKey, loadSettings } = require('@/middlewares/settings');
 const schema = require('./schemaValidate');
+const { calculateInvoiceTotals } = require('@/services/invoiceGstService');
 const {
   checkInvoiceStock,
   deductInvoiceStock,
@@ -26,28 +27,19 @@ const create = async (req, res) => {
 
   const { items = [], taxRate = 0, discount = 0 } = value;
 
-  // default
-  let subTotal = 0;
-  let taxTotal = 0;
-  let total = 0;
+  body = { ...value, taxRate: Number(taxRate) || 0, discount };
 
-  //Calculate the items array with subTotal, total, taxTotal
-  items.map((item) => {
-    let total = calculate.multiply(item['quantity'], item['price']);
-    //sub total
-    subTotal = calculate.add(subTotal, total);
-    //item total
-    item['total'] = total;
-  });
-  taxTotal = calculate.multiply(subTotal, taxRate / 100);
-  total = calculate.add(subTotal, taxTotal);
+  try {
+    const settings = await loadSettings();
+    body = calculateInvoiceTotals(body, settings.company_state);
+  } catch (err) {
+    if (err.code === 'INVALID_GSTIN') {
+      return res.status(400).json({ success: false, result: null, message: err.message });
+    }
+    throw err;
+  }
 
-  body['subTotal'] = subTotal;
-  body['taxTotal'] = taxTotal;
-  body['total'] = total;
-  body['items'] = items;
-
-  let paymentStatus = calculate.sub(total, discount) === 0 ? 'paid' : 'unpaid';
+  let paymentStatus = calculate.sub(body.total, discount) === 0 ? 'paid' : 'unpaid';
 
   body['paymentStatus'] = paymentStatus;
   body['createdBy'] = req.admin._id;

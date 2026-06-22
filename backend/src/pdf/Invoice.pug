@@ -264,40 +264,51 @@ html
           .right.company-info
               p.strong #{settings.company_name}
               p #{settings.company_address}
+              if settings.company_state
+                p State: #{settings.company_state}
               if settings.company_gstin
                 p GSTIN: #{settings.company_gstin}
               else if settings.company_tax_number
                 p GSTIN: #{settings.company_tax_number}
-              p #{settings.company_reg_number}
+              if settings.company_phone
+                p Ph: #{settings.company_phone}
               
         .col.col-24
           .space  
         .left.col-14
             h1.invoice
-              | #{translate('invoice')}
+              | TAX INVOICE
             div 
               .col.col-7
                 p.strong #{translate('Date')} :
                 p #{moment(model.date).format(dateFormat)}
               .col.col-9
-                p.strong #{translate('Expired Date')} :
-                p #{moment(model.expiredDate).format(dateFormat)}
-              .col.col-8 
-                p.strong #{translate('Number')} :
-                p # #{model.number}/#{model.year || ""} 
+                p.strong Invoice No :
+                p #{model.number}/#{model.year || ""} 
+              .col.col-8
+                if model.placeOfSupply
+                  p.strong Place of Supply :
+                  p #{model.placeOfSupply}
               
         .right.col-10
             .billTo
-                p #{translate('Client')} :
+                p.strong Bill To :
                 if model.customerName
                   p #{model.customerName}
                 else if model.client
                   p #{model.client.name}
-                  p #{model.client.address}
-                  p #{model.client.phone}
-                  p #{model.client.email}
+                  if model.client.address
+                    p #{model.client.address}
+                  if model.client.state
+                    p State: #{model.client.state}
+                  if model.client.phone
+                    p #{model.client.phone}
                 else
                   p Walk-in Customer
+                if model.customerGstin
+                  p GSTIN: #{model.customerGstin}
+                else if model.client && model.client.gstin
+                  p GSTIN: #{model.client.gstin}
         .col.col-24
           .space  
       main
@@ -305,37 +316,44 @@ html
           thead
             tr.tableHeader
               th.service #{translate('item')}
+              th HSN
               th #{translate('Quantity')}
               th #{translate('PRICE')}
-              th #{translate('TOTAL')}
+              th Taxable
+              th GST%
           tbody
             each item in model.items
               tr
                 td.service #{item.itemName}
-                  span #{item.description}
+                  if item.description
+                    span #{item.description}
+                td.qty #{item.hsnCode || '-'}
                 td.qty #{item.quantity}  
-                td.unit  #{moneyFormatter({amount:item.price})}
+                td.unit #{moneyFormatter({amount:item.price})}
                 td.total #{moneyFormatter({amount:item.total})}
+                td.qty #{model.taxRate || item.gstRate || 0}%
             tr
-              td(colspan='3') #{translate('SUB TOTAL')}
+              td(colspan='4') Taxable Value
               td.total #{moneyFormatter({amount:model.subTotal})}
-            if model.taxRate > 0
+              td
+            if model.gstType === 'inter' && model.taxRate > 0
               tr
-                td(colspan='3') CGST @ #{model.taxRate / 2} %
-                td.total #{moneyFormatter({amount:model.taxTotal / 2})}
+                td(colspan='4') IGST @ #{model.taxRate} %
+                td.total #{moneyFormatter({amount:model.igstTotal || model.taxTotal})}
+                td
+            else if model.taxRate > 0
               tr
-                td(colspan='3') SGST @ #{model.taxRate / 2} %
-                td.total #{moneyFormatter({amount:model.taxTotal / 2})}
+                td(colspan='4') CGST @ #{model.taxRate / 2} %
+                td.total #{moneyFormatter({amount:model.cgstTotal || model.taxTotal / 2})}
+                td
               tr
-                td(colspan='3') GST #{model.taxRate} % (Total)
-                td.total #{moneyFormatter({amount:model.taxTotal})}
-            else
-              tr
-                td(colspan='3') #{translate('TAX')} #{model.taxRate} %
-                td.total #{moneyFormatter({amount:model.taxTotal})}
+                td(colspan='4') SGST @ #{model.taxRate / 2} %
+                td.total #{moneyFormatter({amount:model.sgstTotal || model.taxTotal / 2})}
+                td
             tr
-              td.grand.total(colspan='3')  #{translate('TOTAL')} 
+              td.grand.total(colspan='4')  #{translate('TOTAL')} 
               td.grand.total #{moneyFormatter({amount:model.total})}
+              td
         
       .col.col-24
           .space     

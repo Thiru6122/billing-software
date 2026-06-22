@@ -11,6 +11,8 @@ const schema = new mongoose.Schema({
   phone: String,
   country: String,
   address: String,
+  state: String,
+  gstin: { type: String, trim: true, uppercase: true },
   email: String,
   createdBy: { type: mongoose.Schema.ObjectId, ref: 'Admin' },
   assigned: { type: mongoose.Schema.ObjectId, ref: 'Admin' },

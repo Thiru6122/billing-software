@@ -26,13 +26,13 @@
   {
     "settingCategory": "company_settings",
     "settingKey": "company_state",
-    "settingValue": "New York",
+    "settingValue": "Tamil Nadu",
     "valueType": "string"
   },
   {
     "settingCategory": "company_settings",
     "settingKey": "company_country",
-    "settingValue": "United State",
+    "settingValue": "India",
     "valueType": "string"
   },
   {

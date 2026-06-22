@@ -3,6 +3,7 @@ import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import useLanguage from '@/locale/useLanguage';
 import BarcodeField from '@/components/BarcodeField';
 import BarcodeScanAssign from '@/components/BarcodeScanAssign';
+import SelectAsync from '@/components/SelectAsync';
 
 export default function ProductForm({ isUpdateForm = false }) {
   const translate = useLanguage();
@@ -53,6 +54,17 @@ export default function ProductForm({ isUpdateForm = false }) {
       </Form.Item>
       <Form.Item label="HSN Code" name="hsnCode">
         <Input placeholder="e.g. 6109" maxLength={8} />
+      </Form.Item>
+      <Form.Item label="GST %" name="taxRate" initialValue={0}>
+        <SelectAsync
+          entity="taxes"
+          outputValue="taxValue"
+          displayLabels={['taxName']}
+          withRedirect
+          urlToRedirect="/taxes"
+          redirectLabel="Add GST rate"
+          placeholder="Select GST %"
+        />
       </Form.Item>
       <Form.Item label={translate('description')} name="description">
         <Input.TextArea rows={2} />

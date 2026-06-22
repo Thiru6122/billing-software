@@ -28,11 +28,12 @@ const Item = ({ item, currentErp }) => {
   const { moneyFormatter } = useMoney();
   return (
     <Row gutter={[12, 0]} key={item._id}>
-      <Col className="gutter-row" span={11}>
+      <Col className="gutter-row" span={8}>
         <p style={{ marginBottom: 5 }}>
           <strong>{item.itemName}</strong>
         </p>
         <p>{item.description}</p>
+        {item.hsnCode && <p style={{ color: '#666' }}>HSN: {item.hsnCode}</p>}
       </Col>
       <Col className="gutter-row" span={4}>
         <p
@@ -295,7 +296,7 @@ export default function ReadItem({ config, selectedItem }) {
       >
         <Row gutter={[12, -5]}>
           <Col className="gutter-row" span={12}>
-            <p>{translate('Sub Total')} :</p>
+            <p>Taxable value :</p>
           </Col>
 
           <Col className="gutter-row" span={12}>
@@ -303,16 +304,71 @@ export default function ReadItem({ config, selectedItem }) {
               {moneyFormatter({ amount: currentErp.subTotal, currency_code: currentErp.currency })}
             </p>
           </Col>
-          <Col className="gutter-row" span={12}>
-            <p>
-              {translate('Tax Total')} ({currentErp.taxRate} %) :
-            </p>
-          </Col>
-          <Col className="gutter-row" span={12}>
-            <p>
-              {moneyFormatter({ amount: currentErp.taxTotal, currency_code: currentErp.currency })}
-            </p>
-          </Col>
+          {currentErp.gstType === 'inter' && currentErp.taxTotal > 0 && (
+            <Col className="gutter-row" span={12}>
+              <p>IGST ({currentErp.taxRate}%) :</p>
+            </Col>
+          )}
+          {currentErp.gstType === 'inter' && currentErp.taxTotal > 0 && (
+            <Col className="gutter-row" span={12}>
+              <p>
+                {moneyFormatter({
+                  amount: currentErp.igstTotal ?? currentErp.taxTotal,
+                  currency_code: currentErp.currency,
+                })}
+              </p>
+            </Col>
+          )}
+          {currentErp.gstType !== 'inter' && currentErp.taxTotal > 0 && (
+            <>
+              <Col className="gutter-row" span={12}>
+                <p>CGST ({currentErp.taxRate / 2}%) :</p>
+              </Col>
+              <Col className="gutter-row" span={12}>
+                <p>
+                  {moneyFormatter({
+                    amount: currentErp.cgstTotal ?? currentErp.taxTotal / 2,
+                    currency_code: currentErp.currency,
+                  })}
+                </p>
+              </Col>
+              <Col className="gutter-row" span={12}>
+                <p>SGST ({currentErp.taxRate / 2}%) :</p>
+              </Col>
+              <Col className="gutter-row" span={12}>
+                <p>
+                  {moneyFormatter({
+                    amount: currentErp.sgstTotal ?? currentErp.taxTotal / 2,
+                    currency_code: currentErp.currency,
+                  })}
+                </p>
+              </Col>
+            </>
+          )}
+          {!(currentErp.taxTotal > 0) && (
+            <>
+              <Col className="gutter-row" span={12}>
+                <p>
+                  {translate('Tax Total')} ({currentErp.taxRate} %) :
+                </p>
+              </Col>
+              <Col className="gutter-row" span={12}>
+                <p>
+                  {moneyFormatter({ amount: currentErp.taxTotal, currency_code: currentErp.currency })}
+                </p>
+              </Col>
+            </>
+          )}
+          {currentErp.placeOfSupply && (
+            <>
+              <Col className="gutter-row" span={12}>
+                <p>Place of supply :</p>
+              </Col>
+              <Col className="gutter-row" span={12}>
+                <p>{currentErp.placeOfSupply}</p>
+              </Col>
+            </>
+          )}
           <Col className="gutter-row" span={12}>
             <p>{translate('Total')} :</p>
           </Col>

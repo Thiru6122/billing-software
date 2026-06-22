@@ -5,7 +5,9 @@ const Model = mongoose.model('Invoice');
 const custom = require('@/controllers/pdfController');
 
 const { calculate } = require('@/helpers');
+const { loadSettings } = require('@/middlewares/settings');
 const schema = require('./schemaValidate');
+const { calculateInvoiceTotals } = require('@/services/invoiceGstService');
 const {
   checkInvoiceStock,
   deductInvoiceStock,
@@ -34,36 +36,20 @@ const update = async (req, res) => {
 
   const { credit } = previousInvoice;
 
-  const { items = [], taxRate = 0, discount = 0 } = req.body;
+  const { items = [], taxRate = 0, discount = 0 } = value;
 
-  if (items.length === 0) {
-    return res.status(400).json({
-      success: false,
-      result: null,
-      message: 'Items cannot be empty',
-    });
+  body = { ...value, taxRate: Number(taxRate) || 0, discount };
+
+  try {
+    const settings = await loadSettings();
+    body = calculateInvoiceTotals(body, settings.company_state);
+  } catch (err) {
+    if (err.code === 'INVALID_GSTIN') {
+      return res.status(400).json({ success: false, result: null, message: err.message });
+    }
+    throw err;
   }
 
-  // default
-  let subTotal = 0;
-  let taxTotal = 0;
-  let total = 0;
-
-  //Calculate the items array with subTotal, total, taxTotal
-  items.map((item) => {
-    let total = calculate.multiply(item['quantity'], item['price']);
-    //sub total
-    subTotal = calculate.add(subTotal, total);
-    //item total
-    item['total'] = total;
-  });
-  taxTotal = calculate.multiply(subTotal, taxRate / 100);
-  total = calculate.add(subTotal, taxTotal);
-
-  body['subTotal'] = subTotal;
-  body['taxTotal'] = taxTotal;
-  body['total'] = total;
-  body['items'] = items;
   body['pdf'] = 'invoice-' + req.params.id + '.pdf';
   if (body.hasOwnProperty('currency')) {
     delete body.currency;
@@ -71,7 +57,7 @@ const update = async (req, res) => {
   // Find document by id and updates with the required fields
 
   let paymentStatus =
-    calculate.sub(total, discount) === credit ? 'paid' : credit > 0 ? 'partially' : 'unpaid';
+    calculate.sub(body.total, discount) === credit ? 'paid' : credit > 0 ? 'partially' : 'unpaid';
   body['paymentStatus'] = paymentStatus;
 
   if (!body.client || body.client === '') {

@@ -6,7 +6,7 @@ import { useMoney } from '@/settings';
 import calculate from '@/utils/calculate';
 import useLanguage from '@/locale/useLanguage';
 
-export default function ItemRow({ field, remove, current = null, scanOnly = false }) {
+export default function ItemRow({ field, remove, current = null, scanOnly = false, showHsn = false }) {
   const translate = useLanguage();
   const form = Form.useFormInstance();
   const money = useMoney();
@@ -43,7 +43,7 @@ export default function ItemRow({ field, remove, current = null, scanOnly = fals
       <Form.Item name={[field.name, 'total']} hidden>
         <Input />
       </Form.Item>
-      <Col className="gutter-row" span={scanOnly ? 6 : 4}>
+      <Col className="gutter-row" span={showHsn ? 5 : scanOnly ? 6 : 4}>
         <Form.Item
           name={[field.name, 'itemName']}
           rules={[
@@ -56,7 +56,14 @@ export default function ItemRow({ field, remove, current = null, scanOnly = fals
           <Input placeholder={translate('name')} readOnly={scanOnly} />
         </Form.Item>
       </Col>
-      <Col className="gutter-row" span={scanOnly ? 6 : 5}>
+      {showHsn && (
+        <Col className="gutter-row" span={3}>
+          <Form.Item name={[field.name, 'hsnCode']}>
+            <Input placeholder="HSN" readOnly={scanOnly} />
+          </Form.Item>
+        </Col>
+      )}
+      <Col className="gutter-row" span={showHsn ? 4 : scanOnly ? 6 : 5}>
         <Form.Item name={[field.name, 'description']}>
           <Input placeholder={translate('description')} readOnly={scanOnly} />
         </Form.Item>

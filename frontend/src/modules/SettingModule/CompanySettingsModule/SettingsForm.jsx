@@ -15,6 +15,7 @@ const formItems = [
   {
     settingKey: 'company_state',
     valueType: 'string',
+    label: 'State (for GST)',
   },
   {
     settingKey: 'company_country',
