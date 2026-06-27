@@ -1,0 +1,31 @@
+.moneyInput {
+  width: 100%;
+}
+
+.moneyInput input {
+  text-align: right;
+}
+
+@media print {
+  .no-print,
+  .ant-layout-sider,
+  .ant-layout-header,
+  .sidePanel,
+  .navigation {
+    display: none !important;
+  }
+
+  .ant-layout-content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #invoice-print-area {
+    padding: 16px;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
