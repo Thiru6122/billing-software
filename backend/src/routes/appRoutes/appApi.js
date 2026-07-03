@@ -28,6 +28,7 @@ const routerApp = (entity, controller) => {
     router.route(`/${entity}/barcode/:code`).get(catchErrors(controller['lookupByBarcode']));
     router.route(`/${entity}/generateLabelBatch`).post(catchErrors(controller['generateLabelBatch']));
     router.route(`/${entity}/labelPool`).get(catchErrors(controller['labelPool']));
+    router.route(`/${entity}/printBarcodeLabels`).post(catchErrors(controller['printBarcodeLabels']));
     router.route(`/${entity}/generateBarcodes`).post(catchErrors(controller['generateBarcodes']));
     router.route(`/${entity}/inventorySummary`).get(catchErrors(controller['inventorySummary']));
     router.route(`/${entity}/adjustStock`).post(catchErrors(controller['adjustStock']));

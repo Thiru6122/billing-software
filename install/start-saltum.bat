@@ -31,29 +31,19 @@ if not exist "backend\node_modules" (
   exit /b 1
 )
 
-if not exist "frontend\dist\index.html" (
-  echo Frontend not built yet. Running installer...
-  echo.
-  powershell -ExecutionPolicy Bypass -File "%~dp0install-customer.ps1" -NonInteractive
-  if errorlevel 1 (
-    echo.
-    echo ERROR: Installation failed. See messages above.
-    pause
-    exit /b 1
-  )
+if not exist "frontend\node_modules" (
+  echo ERROR: Frontend packages are not installed.
+  echo Run install\install-customer.ps1 first.
+  pause
+  exit /b 1
 )
 
 for /f "usebackq delims=" %%p in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0get-app-port.ps1"`) do set "APP_PORT=%%p"
 if not defined APP_PORT set "APP_PORT=8888"
 
-netstat -ano | findstr /C:":%APP_PORT% " | findstr "LISTENING" >nul 2>&1
-if not errorlevel 1 (
-  echo ERROR: Port %APP_PORT% is already in use.
-  echo.
-  echo Saltum may already be running - check for another open Saltum window.
-  echo To use a different port, add PORT=8889 to backend\.env and try again.
-  pause
-  exit /b 1
+echo Stopping any existing Saltum server on port %APP_PORT%...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr /C:":%APP_PORT% " ^| findstr LISTENING') do (
+  taskkill /F /PID %%a >nul 2>&1
 )
 
 sc query MongoDB >nul 2>&1
@@ -61,10 +51,25 @@ if not errorlevel 1 (
   net start MongoDB >nul 2>&1
 )
 
+echo.
+echo Building frontend with latest code...
+cd frontend
+if exist dist rmdir /s /q dist
+call npm run build
+if errorlevel 1 (
+  echo.
+  echo ERROR: Frontend build failed. See messages above.
+  cd ..
+  pause
+  exit /b 1
+)
+cd ..
+
 cd backend
 set NODE_ENV=production
 set SERVE_FRONTEND=true
 
+echo.
 echo Starting server at http://localhost:%APP_PORT%
 echo Keep this window open while using Saltum.
 echo Press Ctrl+C to stop the app.

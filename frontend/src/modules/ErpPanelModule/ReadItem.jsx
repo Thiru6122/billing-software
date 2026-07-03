@@ -21,6 +21,7 @@ import { generate as uniqueId } from 'shortid';
 import { selectCurrentItem } from '@/redux/erp/selectors';
 
 import { DOWNLOAD_BASE_URL } from '@/config/serverApiConfig';
+import { openDocumentPrint } from '@/utils/printDocument';
 import { useMoney, useDate } from '@/settings';
 import useMail from '@/hooks/useMail';
 import { useNavigate } from 'react-router-dom';
@@ -152,7 +153,7 @@ export default function ReadItem({ config, selectedItem }) {
             <Button
               key={`${uniqueId()}`}
               className="no-print"
-              onClick={() => window.print()}
+              onClick={() => openDocumentPrint(entity, currentErp._id)}
               icon={<PrinterOutlined />}
             >
               {translate('Print')}

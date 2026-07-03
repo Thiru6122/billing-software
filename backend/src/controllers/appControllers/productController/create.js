@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { logAudit } = require('@/services/auditService');
-const { assignBarcodeToProduct } = require('@/services/barcodeLabelService');
+const { resolveProductBarcode } = require('@/services/barcodeLabelService');
+const { applyProductLabelDefaults } = require('@/utils/productLabelDefaults');
 
 const create = async (req, res) => {
   const Model = mongoose.model('Product');
@@ -8,34 +9,23 @@ const create = async (req, res) => {
   req.body.removed = false;
   if (req.storeId && Model.schema.paths.store) req.body.store = req.storeId;
 
-  const barcode = String(req.body.barcode || '').trim();
-  if (!barcode) {
-    return res.status(400).json({
-      success: false,
-      result: null,
-      message: 'Scan a printed barcode label before saving the product.',
-    });
-  }
-  req.body.barcode = barcode;
-
-  let result;
+  let barcode;
   try {
-    result = await new Model({ ...req.body }).save();
-    await assignBarcodeToProduct({
+    barcode = await resolveProductBarcode({
       storeId: req.storeId,
-      barcode,
-      productId: result._id,
+      barcode: req.body.barcode,
     });
   } catch (err) {
-    if (result?._id) {
-      await Model.findByIdAndDelete(result._id);
-    }
     return res.status(400).json({
       success: false,
       result: null,
       message: err.message,
     });
   }
+  req.body.barcode = barcode;
+  Object.assign(req.body, applyProductLabelDefaults(req.body));
+
+  const result = await new Model({ ...req.body }).save();
 
   if (req.admin) {
     logAudit({
@@ -54,7 +44,7 @@ const create = async (req, res) => {
   return res.status(200).json({
     success: true,
     result,
-    message: 'Product saved and barcode mapped successfully.',
+    message: 'Product saved successfully.',
   });
 };
 

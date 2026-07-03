@@ -210,27 +210,27 @@ function LoadInvoiceForm({ current = null }) {
         </Col>
       </Row>
       <Divider dashed />
-      <Row gutter={[12, 12]} style={{ position: 'relative' }}>
-        <Col className="gutter-row" span={5}>
+      <Row gutter={[12, 12]} style={{ position: 'relative' }} className="invoice-items-header">
+        <Col className="gutter-row" xs={24} sm={12} md={6}>
           <p>{translate('Item')}</p>
         </Col>
-        <Col className="gutter-row" span={3}>
+        <Col className="gutter-row" xs={8} sm={4} md={2}>
           <p>HSN</p>
         </Col>
-        <Col className="gutter-row" span={4}>
+        <Col className="gutter-row" xs={16} sm={8} md={3}>
           <p>{translate('description')}</p>
         </Col>
-        <Col className="gutter-row" span={3}>
+        <Col className="gutter-row" xs={8} sm={4} md={2}>
           <p>{translate('Quantity')}</p>
         </Col>
-        <Col className="gutter-row" span={2}>
-          <p>Price (excl.)</p>
+        <Col className="gutter-row" xs={16} sm={8} md={4}>
+          <p>{translate('unit_price')}</p>
         </Col>
-        <Col className="gutter-row" span={2}>
+        <Col className="gutter-row" xs={12} sm={6} md={3}>
           <p>GST</p>
         </Col>
-        <Col className="gutter-row" span={2}>
-          <p>{translate('Total')}</p>
+        <Col className="gutter-row" xs={12} sm={6} md={4}>
+          <p>{translate('line_total')}</p>
         </Col>
       </Row>
       <Form.List name="items">

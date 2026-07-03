@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-const { assignBarcodeToProduct } = require('@/services/barcodeLabelService');
+const { resolveProductBarcode } = require('@/services/barcodeLabelService');
+const { applyProductLabelDefaults } = require('@/utils/productLabelDefaults');
 
 const update = async (req, res) => {
   const Model = mongoose.model('Product');
@@ -13,24 +14,12 @@ const update = async (req, res) => {
     });
   }
 
-  const barcode = String(req.body.barcode || '').trim();
-  if (!barcode) {
-    return res.status(400).json({
-      success: false,
-      result: null,
-      message: 'Scan a printed barcode label before saving the product.',
-    });
-  }
-
-  req.body.barcode = barcode;
-  if (req.storeId && Model.schema.paths.store) req.body.store = req.storeId;
-
+  let barcode;
   try {
-    await assignBarcodeToProduct({
+    barcode = await resolveProductBarcode({
       storeId: req.storeId,
-      barcode,
+      barcode: req.body.barcode ?? previous.barcode,
       productId: previous._id,
-      previousBarcode: previous.barcode,
     });
   } catch (err) {
     return res.status(400).json({
@@ -39,6 +28,10 @@ const update = async (req, res) => {
       message: err.message,
     });
   }
+
+  req.body.barcode = barcode;
+  if (req.storeId && Model.schema.paths.store) req.body.store = req.storeId;
+  Object.assign(req.body, applyProductLabelDefaults({ ...previous.toObject(), ...req.body }));
 
   const result = await Model.findOneAndUpdate(
     { _id: req.params.id, removed: false, store: req.storeId },
@@ -49,7 +42,7 @@ const update = async (req, res) => {
   return res.status(200).json({
     success: true,
     result,
-    message: 'Product updated and barcode mapped successfully.',
+    message: 'Product updated successfully.',
   });
 };
 

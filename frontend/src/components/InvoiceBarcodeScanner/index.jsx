@@ -1,23 +1,123 @@
 import { useRef, useState, useEffect } from 'react';
-import { Form, Input, Alert, message } from 'antd';
-import { BarcodeOutlined } from '@ant-design/icons';
+import { Form, Input, Alert, message, Select, Row, Col, Empty } from 'antd';
+import { BarcodeOutlined, SearchOutlined } from '@ant-design/icons';
 import { request } from '@/request';
 import useLanguage from '@/locale/useLanguage';
-import calculate from '@/utils/calculate';
+import useDebounce from '@/hooks/useDebounce';
+import useMoney from '@/settings/useMoney';
+import { addProductToInvoice } from '@/utils/invoiceProductLineItem';
 
-function buildLineItem(product, quantity = 1, taxRate = 0) {
-  const price = Number(product.price) || 0;
-  const qty = Number(quantity) || 1;
-  return {
-    product: product._id,
-    itemName: product.name,
-    hsnCode: product.hsnCode || '',
-    gstRate: Number(product.taxRate) || Number(taxRate) || 0,
-    price,
-    quantity: qty,
-    total: Number.parseFloat(calculate.multiply(price, qty)),
-    description: product.sku ? `SKU: ${product.sku}` : '',
+function InvoiceProductSearch({ add, taxRate = 0 }) {
+  const translate = useLanguage();
+  const { moneyFormatter } = useMoney();
+  const form = Form.useFormInstance();
+  const [options, setOptions] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedValue, setSelectedValue] = useState(undefined);
+  const addingRef = useRef(false);
+
+  const [, cancelDebounce] = useDebounce(
+    () => setDebouncedSearch(searchText),
+    400,
+    [searchText]
+  );
+
+  useEffect(() => {
+    const query = debouncedSearch.trim();
+    if (!query) {
+      setOptions([]);
+      setSearching(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    setSearching(true);
+
+    request
+      .search({
+        entity: 'product',
+        options: { q: query, fields: 'name,sku,barcode' },
+      })
+      .then((response) => {
+        if (cancelled) return;
+        setOptions(
+          response?.success
+            ? (response.result || []).filter((product) => product.enabled !== false)
+            : []
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setSearching(false);
+      });
+
+    return () => {
+      cancelled = true;
+      cancelDebounce();
+    };
+  }, [debouncedSearch, cancelDebounce]);
+
+  const handleProductSelect = async (productId) => {
+    if (!productId || addingRef.current) return;
+
+    addingRef.current = true;
+    try {
+      let product = options.find((item) => String(item._id) === String(productId));
+
+      if (!product) {
+        const response = await request.read({ entity: 'product', id: productId });
+        if (!response?.success || !response?.result) {
+          message.error(translate('product_not_found_for_barcode'));
+          return;
+        }
+        product = response.result;
+      }
+
+      addProductToInvoice({ form, add, product, taxRate });
+      message.success(`${product.name} ${translate('added')}`);
+      setSelectedValue(undefined);
+      setSearchText('');
+      setDebouncedSearch('');
+      setOptions([]);
+    } finally {
+      addingRef.current = false;
+    }
   };
+
+  return (
+    <Select
+      showSearch
+      allowClear
+      size="large"
+      value={selectedValue}
+      placeholder={translate('search_product_to_add')}
+      filterOption={false}
+      loading={searching}
+      notFoundContent={searching ? '...' : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+      onSearch={(value) => {
+        setSearchText(value);
+        setSelectedValue(undefined);
+      }}
+      onChange={handleProductSelect}
+      onClear={() => {
+        setSearchText('');
+        setDebouncedSearch('');
+        setOptions([]);
+        setSelectedValue(undefined);
+      }}
+      suffixIcon={<SearchOutlined />}
+      style={{ width: '100%' }}
+    >
+      {options.map((product) => (
+        <Select.Option key={product._id} value={product._id}>
+          {product.name}
+          {product.barcode ? ` (${product.barcode})` : ''}
+          {product.price != null ? ` — ${moneyFormatter({ amount: product.price })}` : ''}
+        </Select.Option>
+      ))}
+    </Select>
+  );
 }
 
 export default function InvoiceBarcodeScanner({ add, taxRate = 0 }) {
@@ -52,30 +152,7 @@ export default function InvoiceBarcodeScanner({ add, taxRate = 0 }) {
       }
 
       const product = response.result;
-      const items = (form.getFieldValue('items') || []).filter((row) => row && row.itemName);
-
-      const existingIndex = items.findIndex(
-        (row) =>
-          String(row.product) === String(product._id) ||
-          String(row.product?._id) === String(product._id)
-      );
-
-      if (existingIndex >= 0) {
-        const currentQty = Number(items[existingIndex].quantity) || 1;
-        const nextQty = currentQty + 1;
-        const price = Number(items[existingIndex].price) || Number(product.price) || 0;
-
-        form.setFieldValue(['items', existingIndex, 'quantity'], nextQty);
-        form.setFieldValue(
-          ['items', existingIndex, 'total'],
-          calculate.multiply(price, nextQty)
-        );
-      } else if (typeof add === 'function') {
-        add(buildLineItem(product, 1, taxRate));
-      } else {
-        form.setFieldValue('items', [...items, buildLineItem(product, 1, taxRate)]);
-      }
-
+      addProductToInvoice({ form, add, product, taxRate });
       message.success(`${product.name} ${translate('added')}`);
       setScanValue('');
     } catch {
@@ -92,21 +169,37 @@ export default function InvoiceBarcodeScanner({ add, taxRate = 0 }) {
       <Alert
         type="info"
         showIcon
-        icon={<BarcodeOutlined />}
-        message={translate('scan_barcode_to_add')}
-        description={translate('scan_barcode_invoice_hint')}
+        message={translate('add_product_to_invoice')}
+        description={translate('add_product_invoice_hint')}
         style={{ marginBottom: 12 }}
       />
-      <Input
-        ref={inputRef}
-        size="large"
-        value={scanValue}
-        onChange={(e) => setScanValue(e.target.value)}
-        onKeyDown={handleScan}
-        placeholder={translate('scan_barcode_placeholder')}
-        prefix={<BarcodeOutlined />}
-        allowClear
-      />
+      <Row gutter={[16, 16]}>
+        <Col xs={24} md={12}>
+          <TypographyLabel text={translate('scan_barcode_to_add')} />
+          <Input
+            ref={inputRef}
+            size="large"
+            value={scanValue}
+            onChange={(e) => setScanValue(e.target.value)}
+            onKeyDown={handleScan}
+            placeholder={translate('scan_barcode_placeholder')}
+            prefix={<BarcodeOutlined />}
+            allowClear
+          />
+        </Col>
+        <Col xs={24} md={12}>
+          <TypographyLabel text={translate('search_product_to_add')} />
+          <InvoiceProductSearch add={add} taxRate={taxRate} />
+        </Col>
+      </Row>
+    </div>
+  );
+}
+
+function TypographyLabel({ text }) {
+  return (
+    <div style={{ marginBottom: 8, fontSize: 13, fontWeight: 500, color: '#444' }}>
+      {text}
     </div>
   );
 }

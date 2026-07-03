@@ -1,18 +1,45 @@
 const mongoose = require('mongoose');
 
 function generateBarcodeValue(index = 0) {
-  const suffix = Math.floor(Math.random() * 900 + 100);
-  return `890${Date.now()}${index}${suffix}`;
+  const six = String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
+  return `89${six}`;
+}
+
+async function productBarcodeExists(storeId, code, excludeProductId) {
+  const Product = mongoose.model('Product');
+  const query = { store: storeId, barcode: code, removed: false };
+  if (excludeProductId) query._id = { $ne: excludeProductId };
+  return !!(await Product.findOne(query));
 }
 
 async function codeExists(storeId, code) {
   const BarcodeLabel = mongoose.model('BarcodeLabel');
-  const Product = mongoose.model('Product');
-  const [label, product] = await Promise.all([
+  const [label, productUsed] = await Promise.all([
     BarcodeLabel.findOne({ store: storeId, code }),
-    Product.findOne({ store: storeId, barcode: code, removed: false }),
+    productBarcodeExists(storeId, code),
   ]);
-  return !!(label || product);
+  return !!(label || productUsed);
+}
+
+async function generateUniqueProductBarcode(storeId, excludeProductId) {
+  for (let i = 0; i < 15; i++) {
+    const code = generateBarcodeValue(i);
+    // eslint-disable-next-line no-await-in-loop
+    if (!(await productBarcodeExists(storeId, code, excludeProductId))) return code;
+  }
+  throw new Error('Could not generate a unique barcode. Try again.');
+}
+
+async function resolveProductBarcode({ storeId, barcode, productId }) {
+  const code = String(barcode || '').trim();
+  if (code) {
+    const used = await productBarcodeExists(storeId, code, productId);
+    if (used) {
+      throw new Error(`Barcode "${code}" is already used by another product.`);
+    }
+    return code;
+  }
+  return generateUniqueProductBarcode(storeId, productId);
 }
 
 async function generateUniqueCode(storeId, index = 0) {
@@ -89,6 +116,8 @@ async function getLabelPoolSummary(storeId) {
 
 module.exports = {
   generateBarcodeValue,
+  generateUniqueProductBarcode,
+  resolveProductBarcode,
   generateLabelBatch,
   assignBarcodeToProduct,
   getLabelPoolSummary,

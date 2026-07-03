@@ -6,7 +6,37 @@
   text-align: right;
 }
 
+.invoice-items-header p {
+  margin: 0 0 4px;
+  font-weight: 500;
+}
+
+.invoice-item-row {
+  padding-right: 28px;
+}
+
+.invoice-item-row__delete {
+  position: absolute;
+  right: 0;
+  top: 8px;
+  color: #ff4d4f;
+  cursor: pointer;
+}
+
+.invoice-item-row .moneyInput.ant-input-number-group-wrapper {
+  width: 100%;
+}
+
+.invoice-item-row .moneyInput .ant-input-number-input {
+  padding: 4px 8px;
+}
+
 @media print {
+  @page {
+    size: letter portrait;
+    margin: 8mm;
+  }
+
   .no-print,
   .ant-layout-sider,
   .ant-layout-header,

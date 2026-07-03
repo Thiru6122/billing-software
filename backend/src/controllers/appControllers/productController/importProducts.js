@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const { adjustProductStock } = require('@/services/stockService');
+const { resolveProductBarcode } = require('@/services/barcodeLabelService');
+const { applyProductLabelDefaults } = require('@/utils/productLabelDefaults');
 
 /**
  * Import products from JSON array (parsed CSV on frontend).
@@ -35,6 +37,12 @@ const importProducts = async (req, res) => {
     const unit = (row.unit || row.Unit || 'pcs').toString().trim();
     const minQuantity = Number(row.minQuantity ?? row.min_quantity ?? row.MinQuantity ?? 0) || 0;
     const category = (row.category || row.Category || '').toString().trim();
+    const labelFields = applyProductLabelDefaults({
+      enterpriseLine1: row.enterpriseLine1 || row.EnterpriseLine1 || row.enterprise_line1,
+      companyName: row.companyName || row.CompanyName || row.company_name,
+      packDate: row.packDate || row.PackDate || row.pack_date,
+      expiryText: row.expiryText || row.ExpiryText || row.expiry_text,
+    });
 
     try {
       let product;
@@ -49,9 +57,16 @@ const importProducts = async (req, res) => {
         product.price = price || product.price;
         product.cost = cost || product.cost;
         if (barcode) product.barcode = barcode;
+        if (!product.barcode) {
+          product.barcode = await resolveProductBarcode({
+            storeId: req.storeId,
+            productId: product._id,
+          });
+        }
         if (unit) product.unit = unit;
         product.minQuantity = minQuantity;
         if (category) product.category = category;
+        Object.assign(product, labelFields);
         product.updated = new Date();
         await product.save();
 
@@ -67,11 +82,16 @@ const importProducts = async (req, res) => {
         }
         results.updated++;
       } else {
+        const resolvedBarcode = await resolveProductBarcode({
+          storeId: req.storeId,
+          barcode,
+        });
         product = await Product.create({
           store: req.storeId,
           name,
           sku: sku || undefined,
-          barcode: barcode || undefined,
+          barcode: resolvedBarcode,
+          ...labelFields,
           price,
           cost,
           quantity: 0,

@@ -15,7 +15,7 @@ export default function BarcodeField({ value }) {
 
   return (
     <div>
-      <Input value={value || ''} readOnly placeholder={translate('scan_barcode_to_map')} />
+      <Input value={value || ''} readOnly placeholder={translate('barcode_auto_assign_placeholder')} />
       {value ? (
         <div
           style={{
@@ -28,11 +28,11 @@ export default function BarcodeField({ value }) {
         >
           <div ref={svgRef} />
           <div style={{ marginTop: 8, color: '#666', fontSize: 12 }}>
-            <BarcodeOutlined /> {translate('barcode_mapped_hint')}
+            <BarcodeOutlined /> {translate('barcode_product_hint')}
           </div>
         </div>
       ) : (
-        <TypographyHint text={translate('barcode_scan_required_hint')} />
+        <TypographyHint text={translate('barcode_auto_assign_hint')} />
       )}
     </div>
   );

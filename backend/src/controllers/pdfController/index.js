@@ -51,7 +51,7 @@ async function findBrowserExecutable() {
   return undefined;
 }
 
-async function renderHtmlToPdf(htmlContent, { targetLocation, format = 'A4' }) {
+async function renderHtmlToPdf(htmlContent, { targetLocation, format = 'Letter' }) {
   const dir = path.dirname(targetLocation);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -78,22 +78,9 @@ async function renderHtmlToPdf(htmlContent, { targetLocation, format = 'A4' }) {
   }
 }
 
-exports.generatePdf = async (
-  modelName,
-  info = { filename: 'pdf_file', format: 'A5', targetLocation: '' },
-  result
-) => {
-  const { targetLocation } = info;
-
-  if (!targetLocation) {
-    throw new Error('PDF target location is required');
-  }
-
-  if (fs.existsSync(targetLocation)) {
-    fs.unlinkSync(targetLocation);
-  }
-
-  if (!pugFiles.includes(modelName.toLowerCase())) {
+async function buildDocumentHtml(modelName, result) {
+  const normalized = modelName.toLowerCase();
+  if (!pugFiles.includes(normalized)) {
     throw new Error(`Unsupported PDF model: ${modelName}`);
   }
 
@@ -124,11 +111,10 @@ exports.generatePdf = async (
 
   settings.public_server_file = process.env.PUBLIC_SERVER_FILE;
 
-  const model =
-    modelName.toLowerCase() === 'invoice' ? enrichInvoiceForPdf(result) : result;
+  const model = normalized === 'invoice' ? enrichInvoiceForPdf(result) : result;
 
-  const templatePath = path.join('src/pdf', modelName + '.pug');
-  const htmlContent = pug.renderFile(templatePath, {
+  const templatePath = path.join('src/pdf', normalized + '.pug');
+  return pug.renderFile(templatePath, {
     model,
     settings,
     translate,
@@ -136,6 +122,60 @@ exports.generatePdf = async (
     moneyFormatter,
     moment,
   });
+}
 
-  await renderHtmlToPdf(htmlContent, info);
+function wrapHtmlForPrint(html) {
+  const printStyle = `
+    <style>
+      @page { size: letter portrait; margin: 8mm; }
+      html, body {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      @media print {
+        html, body {
+          width: 100% !important;
+          max-width: 100% !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        header, main, .table-invoice, footer {
+          max-width: 100% !important;
+        }
+        .sheet {
+          height: auto !important;
+        }
+      }
+    </style>
+  `;
+  let output = html.includes('</head>') ? html.replace('</head>', `${printStyle}</head>`) : printStyle + html;
+  output = output.replace(
+    /<body(\s[^>]*)?>/i,
+    '<body$1 onload="setTimeout(function(){ window.print(); }, 400);" onafterprint="window.close();">'
+  );
+  return output;
+}
+
+exports.buildDocumentHtml = buildDocumentHtml;
+exports.wrapHtmlForPrint = wrapHtmlForPrint;
+
+exports.generatePdf = async (
+  modelName,
+  info = { filename: 'pdf_file', format: 'A5', targetLocation: '' },
+  result
+) => {
+  const { targetLocation, format = 'Letter' } = info;
+
+  if (!targetLocation) {
+    throw new Error('PDF target location is required');
+  }
+
+  if (fs.existsSync(targetLocation)) {
+    fs.unlinkSync(targetLocation);
+  }
+
+  const htmlContent = await buildDocumentHtml(modelName, result);
+  await renderHtmlToPdf(htmlContent, { targetLocation, format });
 };

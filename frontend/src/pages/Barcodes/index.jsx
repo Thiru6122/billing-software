@@ -5,29 +5,25 @@ import {
   Space,
   InputNumber,
   message,
+  Modal,
   Typography,
   Table,
   Tag,
   Steps,
-  Form,
-  Input,
   Row,
   Col,
   Alert,
   Select,
+  Input,
 } from 'antd';
-import { PrinterOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons';
+import { PrinterOutlined, ReloadOutlined, FilePdfOutlined, BarcodeOutlined } from '@ant-design/icons';
 import { PageHeader } from '@ant-design/pro-layout';
-import { useSelector } from 'react-redux';
 import { request } from '@/request';
 import useLanguage from '@/locale/useLanguage';
-import { selectCompanySettings } from '@/redux/settings/selectors';
+import useMoney from '@/settings/useMoney';
 import {
-  printBarcodeLabels,
-  buildRetailLabels,
-  loadLabelTemplate,
-  saveLabelTemplate,
-  generateBarcodeValue,
+  deliverBarcodeLabelPdf,
+  buildProductLabels,
   renderLabelPreviewHtml,
   getLabelLayout,
   LABEL_PRESETS,
@@ -37,54 +33,163 @@ import {
   getPreviewContainerStyle,
 } from '@/utils/barcodePrint';
 
+function expandProductLabels(products, qtyById, moneyFormatter) {
+  const labels = [];
+  products.forEach((product) => {
+    if (!product.barcode) return;
+    const qty = Math.max(1, qtyById[product._id] || 1);
+    const [label] = buildProductLabels([product], { useMoneyFormatter: moneyFormatter });
+    for (let i = 0; i < qty; i++) labels.push(label);
+  });
+  return labels;
+}
+
 export default function Barcodes() {
   const translate = useLanguage();
-  const companySettings = useSelector(selectCompanySettings) || {};
-  const [form] = Form.useForm();
-  const [labelCount, setLabelCount] = useState(30);
-  const [generating, setGenerating] = useState(false);
+  const { moneyFormatter } = useMoney();
   const [loading, setLoading] = useState(true);
-  const [pool, setPool] = useState({ unassigned: 0, assigned: 0, recentUnassigned: [] });
-  const [previewCode, setPreviewCode] = useState(() => generateBarcodeValue());
+  const [products, setProducts] = useState([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [labelQtyByProductId, setLabelQtyByProductId] = useState({});
   const [labelPreset, setLabelPreset] = useState(() => loadLabelPresetId());
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [assigningBarcodes, setAssigningBarcodes] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const layout = useMemo(() => getLabelLayout(labelPreset), [labelPreset]);
-  const templateValues = Form.useWatch([], form);
 
-  useEffect(() => {
-    const template = loadLabelTemplate(companySettings.company_name);
-    form.setFieldsValue(template);
-  }, [companySettings.company_name, form]);
+  const productsWithBarcode = useMemo(
+    () => products.filter((p) => p.barcode && String(p.barcode).trim()),
+    [products]
+  );
+  const productsWithoutBarcode = useMemo(
+    () => products.filter((p) => !p.barcode || !String(p.barcode).trim()),
+    [products]
+  );
+
+  const filteredProducts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return products;
+
+    return products.filter((product) => {
+      const searchable = [
+        product.name,
+        product.sku,
+        product.barcode,
+        product.companyName,
+        product.category,
+        product.enterpriseLine1,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return searchable.includes(query);
+    });
+  }, [products, searchQuery]);
+
+  const selectedProducts = useMemo(
+    () => products.filter((p) => selectedRowKeys.includes(p._id)),
+    [products, selectedRowKeys]
+  );
+
+  const previewProduct = useMemo(() => {
+    const withBarcode = selectedProducts.find((p) => p.barcode);
+    return withBarcode || productsWithBarcode[0] || null;
+  }, [selectedProducts, productsWithBarcode]);
 
   const previewLabel = useMemo(() => {
-    const values = templateValues || form.getFieldsValue();
-    return buildRetailLabels([previewCode], values)[0];
-  }, [templateValues, previewCode, form]);
+    if (!previewProduct) return null;
+    return buildProductLabels([previewProduct], { useMoneyFormatter: moneyFormatter })[0];
+  }, [previewProduct, moneyFormatter]);
 
-  const loadPool = async () => {
+  const loadProducts = async () => {
     setLoading(true);
     try {
-      const res = await request.get({ entity: 'product/labelPool' });
-      if (res?.success) setPool(res.result || {});
+      const res = await request.listAll({ entity: 'product' });
+      if (res?.success) {
+        const list = res.result || [];
+        setProducts(list);
+        setLabelQtyByProductId((prev) => {
+          const next = { ...prev };
+          list.forEach((p) => {
+            if (!next[p._id]) next[p._id] = 1;
+          });
+          return next;
+        });
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadPool();
+    loadProducts();
   }, []);
 
-  const getTemplateFromForm = () => {
-    const values = form.getFieldsValue();
-    saveLabelTemplate(values);
-    return values;
+  const showAdobePrintInstructions = () => {
+    Modal.info({
+      title: translate('label_adobe_print_title'),
+      width: 520,
+      okText: translate('close'),
+      content: (
+        <div style={{ lineHeight: 1.7 }}>
+          <Typography.Paragraph style={{ marginBottom: 12 }}>
+            {translate('label_adobe_print_intro')}
+          </Typography.Paragraph>
+          <ol style={{ paddingLeft: 20, margin: 0 }}>
+            <li>{translate('label_adobe_step_printer')}</li>
+            <li>{translate('label_adobe_step_media')}</li>
+            <li>{translate('label_adobe_step_driver_size')}</li>
+            <li>{translate('label_adobe_step_preview')}</li>
+            <li>{translate('label_adobe_step_range')}</li>
+            <li>{translate('label_adobe_step_scale')}</li>
+            <li>{translate('label_adobe_step_orientation')}</li>
+            <li>{translate('label_adobe_step_rotate')}</li>
+            <li>{translate('label_adobe_step_paper_source')}</li>
+          </ol>
+        </div>
+      ),
+    });
   };
 
-  const printLabels = (codes) => {
-    const template = getTemplateFromForm();
-    const labels = buildRetailLabels(codes, template);
-    printBarcodeLabels(labels, translate('barcode_labels'), { presetId: labelPreset });
+  const deliverPdf = async (labels, { mode = 'download', filename } = {}) => {
+    if (!labels?.length) {
+      message.warning(translate('no_products_selected_for_labels'));
+      return null;
+    }
+
+    if (labels.length % layout.columns !== 0) {
+      message.warning(translate('label_count_multiple_of_3'));
+    }
+
+    setPdfLoading(true);
+    try {
+      const result = await deliverBarcodeLabelPdf(labels, translate('barcode_labels'), {
+        presetId: labelPreset,
+        mode,
+        filename,
+      });
+
+      if (!result.success) {
+        message.error(result.message || translate('label_print_failed'));
+        return null;
+      }
+
+      if (mode === 'download') {
+        message.success(
+          `${translate('label_pdf_downloaded')} (${result.labelCount} labels, ${result.rowCount} row(s))`
+        );
+      } else if (result.mode === 'download' && result.message) {
+        message.warning(result.message);
+      } else {
+        message.success(translate('label_pdf_opened'));
+        showAdobePrintInstructions();
+      }
+      return result;
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   const handlePresetChange = (value) => {
@@ -92,80 +197,123 @@ export default function Barcodes() {
     saveLabelPresetId(value);
   };
 
-  const handleGenerateAndPrint = async () => {
-    try {
-      await form.validateFields();
-    } catch {
+  const handleAssignMissingBarcodes = async () => {
+    const ids = productsWithoutBarcode.map((p) => p._id);
+    if (!ids.length) {
+      message.info(translate('all_products_have_barcode'));
       return;
     }
 
-    if (labelCount % layout.columns !== 0) {
-      message.warning(translate('label_count_multiple_of_3'));
-    }
-
-    setGenerating(true);
+    setAssigningBarcodes(true);
     try {
       const res = await request.post({
-        entity: 'product/generateLabelBatch',
-        jsonData: { count: labelCount },
+        entity: 'product/generateBarcodes',
+        jsonData: { productIds: ids },
       });
-
-      if (!res?.success || !res.result?.length) return;
-
-      message.success(res.message);
-      printLabels(res.result.map((l) => l.code));
-      setPreviewCode(res.result[0]?.code || previewCode);
-      await loadPool();
+      if (res?.success) {
+        message.success(res.message);
+        await loadProducts();
+      }
     } finally {
-      setGenerating(false);
+      setAssigningBarcodes(false);
     }
   };
 
-  const handleReprintUnassigned = async () => {
-    try {
-      await form.validateFields();
-    } catch {
+  const handleDownloadSelected = async () => {
+    const printable = selectedProducts.filter((p) => p.barcode);
+    if (!printable.length) {
+      message.warning(translate('no_products_selected_for_labels'));
       return;
     }
 
-    const codes = pool.recentUnassigned || [];
-    if (!codes.length) {
-      message.warning(translate('no_unassigned_labels'));
-      return;
-    }
-
-    if (codes.length % layout.columns !== 0) {
-      message.warning(translate('label_count_multiple_of_3'));
-    }
-
-    printLabels(codes.map((l) => l.code));
+    const labels = expandProductLabels(printable, labelQtyByProductId, moneyFormatter);
+    await deliverPdf(labels, { mode: 'download' });
   };
 
-  const handlePreviewPrint = async () => {
-    try {
-      await form.validateFields();
-    } catch {
+  const handlePrintOneRow = async () => {
+    if (!previewLabel) {
+      message.warning(translate('no_products_with_barcode'));
       return;
     }
-    printLabels([previewCode, previewCode, previewCode]);
+    const labels = [previewLabel, previewLabel, previewLabel];
+    const result = await deliverPdf(labels, {
+      mode: 'download',
+      filename: 'barcode-labels-1-row.pdf',
+    });
+    if (result?.success) showAdobePrintInstructions();
   };
+
+  const handleLabelQtyChange = (productId, value) => {
+    setLabelQtyByProductId((prev) => ({
+      ...prev,
+      [productId]: Math.max(1, value || 1),
+    }));
+  };
+
+  const totalSelectedLabels = useMemo(() => {
+    return selectedProducts.reduce((sum, p) => {
+      if (!p.barcode) return sum;
+      return sum + (labelQtyByProductId[p._id] || 1);
+    }, 0);
+  }, [selectedProducts, labelQtyByProductId]);
 
   const columns = [
     {
-      title: translate('barcode'),
-      dataIndex: 'code',
+      title: translate('name'),
+      dataIndex: 'name',
+      ellipsis: true,
     },
     {
-      title: translate('status'),
-      dataIndex: 'assigned',
-      render: (assigned) =>
-        assigned ? (
-          <Tag color="green">{translate('mapped')}</Tag>
+      title: translate('barcode'),
+      dataIndex: 'barcode',
+      width: 140,
+      render: (barcode) =>
+        barcode ? (
+          <Typography.Text code>{barcode}</Typography.Text>
         ) : (
-          <Tag color="blue">{translate('ready_to_paste')}</Tag>
+          <Tag color="orange">{translate('missing_barcode')}</Tag>
         ),
     },
+    {
+      title: translate('company_name'),
+      dataIndex: 'companyName',
+      width: 100,
+      ellipsis: true,
+    },
+    {
+      title: translate('pack_date'),
+      dataIndex: 'packDate',
+      width: 90,
+    },
+    {
+      title: translate('price'),
+      dataIndex: 'price',
+      width: 100,
+      render: (price) => moneyFormatter({ amount: price }),
+    },
+    {
+      title: translate('label_qty_per_product'),
+      key: 'labelQty',
+      width: 120,
+      render: (_, record) => (
+        <InputNumber
+          min={1}
+          max={99}
+          value={labelQtyByProductId[record._id] || 1}
+          disabled={!record.barcode}
+          onChange={(value) => handleLabelQtyChange(record._id, value)}
+        />
+      ),
+    },
   ];
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: setSelectedRowKeys,
+    getCheckboxProps: (record) => ({
+      disabled: !record.barcode,
+    }),
+  };
 
   return (
     <div className="pad20">
@@ -173,7 +321,7 @@ export default function Barcodes() {
         title={translate('bulk_barcode_print')}
         subTitle={translate('bulk_barcode_print_subtitle')}
         extra={[
-          <Button key="refresh" icon={<ReloadOutlined />} onClick={loadPool}>
+          <Button key="refresh" icon={<ReloadOutlined />} onClick={loadProducts}>
             {translate('Refresh')}
           </Button>,
         ]}
@@ -185,68 +333,18 @@ export default function Barcodes() {
           size="small"
           current={-1}
           items={[
+            { title: translate('step_add_product'), description: translate('step_add_product_desc') },
+            { title: translate('step_select_products'), description: translate('step_select_products_desc') },
             { title: translate('step_print_labels'), description: translate('step_print_labels_desc') },
-            { title: translate('step_paste_labels'), description: translate('step_paste_labels_desc') },
-            { title: translate('step_scan_product'), description: translate('step_scan_product_desc') },
             { title: translate('step_scan_invoice'), description: translate('step_scan_invoice_desc') },
           ]}
         />
       </Card>
 
-      <Card title={translate('label_details')} style={{ marginBottom: 16 }}>
+      <Card title={translate('label_print_actions')} style={{ marginBottom: 16 }}>
         <Typography.Paragraph type="secondary">
-          {translate('label_details_hint')}
+          {translate('label_details_from_product_hint')}
         </Typography.Paragraph>
-
-        <Form form={form} layout="vertical" requiredMark="optional">
-          <Row gutter={16}>
-            <Col xs={24} md={8}>
-              <Form.Item
-                name="companyName"
-                label={translate('company_name')}
-                rules={[{ required: true, message: translate('required') }]}
-              >
-                <Input placeholder="PURE" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={16}>
-              <Form.Item
-                name="productDescription"
-                label={translate('product_description')}
-                rules={[{ required: true, message: translate('required') }]}
-              >
-                <Input placeholder="CASTOR OIL 100ML" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={8}>
-              <Form.Item
-                name="mrp"
-                label={translate('mrp_rs')}
-                rules={[{ required: true, message: translate('required') }]}
-              >
-                <Input placeholder="39" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={8}>
-              <Form.Item
-                name="packDate"
-                label={translate('pack_date')}
-                rules={[{ required: true, message: translate('required') }]}
-              >
-                <Input placeholder="jan 26" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={8}>
-              <Form.Item
-                name="expiryText"
-                label={translate('expiry_text')}
-                rules={[{ required: true, message: translate('required') }]}
-              >
-                <Input placeholder="12 MONTHS" />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
 
         <Row gutter={16} style={{ marginBottom: 16 }}>
           <Col xs={24} md={12}>
@@ -264,6 +362,12 @@ export default function Barcodes() {
         </Row>
 
         <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 8 }}
+          message={translate('label_print_letter_warning')}
+        />
+        <Alert
           type="info"
           showIcon
           style={{ marginBottom: 16 }}
@@ -274,81 +378,107 @@ export default function Barcodes() {
           <Col xs={24} md={12}>
             <Typography.Text strong>{translate('label_preview')}</Typography.Text>
             <Typography.Text type="secondary" style={{ display: 'block', fontSize: 12 }}>
-              {translate('label_preview_row_hint')}
+              {previewProduct
+                ? `${translate('preview_for')}: ${previewProduct.name}`
+                : translate('label_preview_row_hint')}
             </Typography.Text>
             <div style={{ marginTop: 8, ...getPreviewContainerStyle(labelPreset) }}>
-              <div
-                style={{
-                  border: '1px solid #d9d9d9',
-                  background: '#fff',
-                  overflow: 'hidden',
-                  ...getPreviewScaleStyle(labelPreset),
-                }}
-                dangerouslySetInnerHTML={{
-                  __html: renderLabelPreviewHtml(previewLabel, labelPreset),
-                }}
-              />
+              {previewLabel ? (
+                <div
+                  style={{
+                    border: '1px solid #d9d9d9',
+                    background: '#fff',
+                    overflow: 'hidden',
+                    ...getPreviewScaleStyle(labelPreset),
+                  }}
+                  dangerouslySetInnerHTML={{
+                    __html: renderLabelPreviewHtml(previewLabel, labelPreset),
+                  }}
+                />
+              ) : (
+                <Alert type="info" message={translate('no_products_with_barcode')} showIcon />
+              )}
             </div>
             <Button
               type="link"
               size="small"
               style={{ paddingLeft: 0, marginTop: 8 }}
-              icon={<EyeOutlined />}
-              onClick={handlePreviewPrint}
+              icon={<PrinterOutlined />}
+              loading={pdfLoading}
+              disabled={!previewLabel}
+              onClick={handlePrintOneRow}
             >
-              {translate('print_preview_label')}
+              {translate('print_one_row_pdf')}
             </Button>
           </Col>
           <Col xs={24} md={12}>
-            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-              <div>
-                <span>{translate('label_count')}: </span>
-                <InputNumber
-                  min={3}
-                  max={200}
-                  step={3}
-                  value={labelCount}
-                  onChange={setLabelCount}
-                />
-              </div>
-              <Space wrap>
-                <Button
-                  type="primary"
-                  size="large"
-                  icon={<PrinterOutlined />}
-                  loading={generating}
-                  onClick={handleGenerateAndPrint}
-                >
-                  {translate('generate_and_print_labels')}
-                </Button>
-                <Button icon={<PrinterOutlined />} onClick={handleReprintUnassigned}>
-                  {translate('reprint_unassigned')}
-                </Button>
-              </Space>
-              <div>
-                <Tag color="blue">
-                  {translate('unassigned')}: {pool.unassigned || 0}
-                </Tag>
-                <Tag color="green" style={{ marginLeft: 8 }}>
-                  {translate('mapped')}: {pool.assigned || 0}
-                </Tag>
-              </div>
+            <Space direction="vertical" style={{ width: '100%' }} size="middle">
+              <Typography.Paragraph type="secondary" style={{ fontSize: 12 }}>
+                {translate('label_print_pdf_hint')}
+              </Typography.Paragraph>
+              <Button
+                type="primary"
+                size="large"
+                icon={<FilePdfOutlined />}
+                loading={pdfLoading}
+                disabled={!selectedRowKeys.length}
+                onClick={handleDownloadSelected}
+              >
+                {translate('download_selected_labels_pdf')}
+              </Button>
+              {selectedRowKeys.length > 0 && (
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  {`${translate('selected_labels_count')}: ${totalSelectedLabels}`}
+                </Typography.Text>
+              )}
             </Space>
           </Col>
         </Row>
       </Card>
 
-      <Card title={translate('unassigned_label_pool')}>
+      <Card
+        title={translate('products_for_barcode_print')}
+        extra={
+          productsWithoutBarcode.length > 0 ? (
+            <Button
+              icon={<BarcodeOutlined />}
+              loading={assigningBarcodes}
+              onClick={handleAssignMissingBarcodes}
+            >
+              {translate('assign_missing_barcodes')} ({productsWithoutBarcode.length})
+            </Button>
+          ) : null
+        }
+      >
         <Typography.Paragraph type="secondary">
-          {translate('unassigned_pool_hint')}
+          {translate('products_for_barcode_print_hint')}
         </Typography.Paragraph>
+        <Input.Search
+          allowClear
+          size="large"
+          placeholder={translate('search_product_for_labels')}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ marginBottom: 16, maxWidth: 480 }}
+        />
+        {searchQuery.trim() ? (
+          <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 12, fontSize: 12 }}>
+            {`${filteredProducts.length} / ${products.length} ${translate('products').toLowerCase()}`}
+          </Typography.Text>
+        ) : null}
         <Table
           rowKey="_id"
           loading={loading}
-          dataSource={pool.recentUnassigned || []}
+          dataSource={filteredProducts}
           columns={columns}
-          pagination={{ pageSize: 10 }}
+          rowSelection={rowSelection}
+          pagination={{ pageSize: 15 }}
           size="small"
+          locale={{
+            emptyText: searchQuery.trim()
+              ? translate('no_products_match_search')
+              : translate('no_products_with_barcode'),
+          }}
         />
       </Card>
     </div>

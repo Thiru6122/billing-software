@@ -9,6 +9,7 @@ const lookupByBarcode = require('./lookupByBarcode');
 const generateBarcodes = require('./generateBarcodes');
 const generateLabelBatch = require('./generateLabelBatch');
 const labelPool = require('./labelPool');
+const printBarcodeLabels = require('./printBarcodeLabels');
 const create = require('./create');
 const update = require('./update');
 
@@ -24,6 +25,7 @@ function modelController() {
   methods.generateBarcodes = (req, res) => generateBarcodes(req, res);
   methods.generateLabelBatch = (req, res) => generateLabelBatch(req, res);
   methods.labelPool = (req, res) => labelPool(req, res);
+  methods.printBarcodeLabels = (req, res) => printBarcodeLabels(req, res);
   return methods;
 }
 

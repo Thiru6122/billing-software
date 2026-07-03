@@ -41,6 +41,85 @@ export default function ItemRow({ field, remove, current = null, scanOnly = fals
     form.setFieldValue(['items', field.name, 'total'], calculate.multiply(p, q));
   };
 
+  const moneyInputProps = {
+    readOnly: true,
+    className: 'moneyInput',
+    min: 0,
+    controls: false,
+    style: { width: '100%' },
+    addonAfter: money.currency_position === 'after' ? money.currency_symbol : undefined,
+    addonBefore: money.currency_position === 'before' ? money.currency_symbol : undefined,
+    formatter: (value) =>
+      money.amountFormatter({
+        amount: value ?? 0,
+        currency_code: money.currency_code,
+      }),
+  };
+
+  if (showHsn) {
+    return (
+      <Row gutter={[12, 12]} style={{ position: 'relative' }} className="invoice-item-row">
+        <Form.Item name={[field.name, 'product']} hidden>
+          <Input />
+        </Form.Item>
+        <Form.Item name={[field.name, 'total']} hidden>
+          <Input />
+        </Form.Item>
+        <Form.Item name={[field.name, 'gstRate']} hidden>
+          <InputNumber />
+        </Form.Item>
+        <Col className="gutter-row" xs={24} sm={12} md={6}>
+          <Form.Item
+            name={[field.name, 'itemName']}
+            rules={[{ required: true, message: 'Missing item name' }]}
+          >
+            <Input placeholder={translate('name')} readOnly={scanOnly} />
+          </Form.Item>
+        </Col>
+        <Col className="gutter-row" xs={8} sm={4} md={2}>
+          <Form.Item name={[field.name, 'hsnCode']}>
+            <Input placeholder="HSN" readOnly={scanOnly} />
+          </Form.Item>
+        </Col>
+        <Col className="gutter-row" xs={16} sm={8} md={3}>
+          <Form.Item name={[field.name, 'description']}>
+            <Input placeholder={translate('description')} readOnly={scanOnly} />
+          </Form.Item>
+        </Col>
+        <Col className="gutter-row" xs={8} sm={4} md={2}>
+          <Form.Item name={[field.name, 'quantity']} rules={[{ required: true }]}>
+            <InputNumber style={{ width: '100%' }} min={1} onChange={handleQuantityChange} />
+          </Form.Item>
+        </Col>
+        <Col className="gutter-row" xs={16} sm={8} md={4}>
+          <Form.Item name={[field.name, 'price']} rules={[{ required: true }]}>
+            <InputNumber
+              {...moneyInputProps}
+              readOnly={scanOnly}
+              onChange={(value) => {
+                const q = form.getFieldValue(['items', field.name, 'quantity']) || 1;
+                form.setFieldValue(['items', field.name, 'total'], calculate.multiply(value || 0, q));
+              }}
+            />
+          </Form.Item>
+        </Col>
+        <Col className="gutter-row" xs={12} sm={6} md={3}>
+          <Form.Item label={false}>
+            <InputNumber {...moneyInputProps} value={lineGst} />
+          </Form.Item>
+        </Col>
+        <Col className="gutter-row" xs={12} sm={6} md={4}>
+          <Form.Item label={false}>
+            <InputNumber {...moneyInputProps} value={lineInclusive} />
+          </Form.Item>
+        </Col>
+        <div className="invoice-item-row__delete">
+          <DeleteOutlined onClick={() => remove(field.name)} />
+        </div>
+      </Row>
+    );
+  }
+
   return (
     <Row gutter={[12, 12]} style={{ position: 'relative' }}>
       <Form.Item name={[field.name, 'product']} hidden>

@@ -18,6 +18,10 @@ export const DOWNLOAD_BASE_URL =
   import.meta.env.PROD || import.meta.env.VITE_DEV_REMOTE
     ? import.meta.env.VITE_BACKEND_SERVER + 'download/'
     : 'http://localhost:8888/download/';
+export const PRINT_BASE_URL =
+  import.meta.env.PROD || import.meta.env.VITE_DEV_REMOTE
+    ? import.meta.env.VITE_BACKEND_SERVER + 'print/'
+    : 'http://localhost:8888/print/';
 export const ACCESS_TOKEN_NAME = 'x-auth-token';
 
 export const FILE_BASE_URL = import.meta.env.VITE_FILE_BASE_URL;

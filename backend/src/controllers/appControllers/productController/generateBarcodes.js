@@ -1,9 +1,6 @@
 const mongoose = require('mongoose');
-
-function generateBarcodeValue() {
-  const suffix = Math.floor(Math.random() * 900 + 100);
-  return `890${Date.now()}${suffix}`;
-}
+const { generateUniqueProductBarcode } = require('@/services/barcodeLabelService');
+const { applyProductLabelDefaults } = require('@/utils/productLabelDefaults');
 
 const generateBarcodes = async (req, res) => {
   const Product = mongoose.model('Product');
@@ -29,7 +26,8 @@ const generateBarcodes = async (req, res) => {
 
   const updated = [];
   for (const product of products) {
-    product.barcode = generateBarcodeValue();
+    product.barcode = await generateUniqueProductBarcode(req.storeId, product._id);
+    Object.assign(product, applyProductLabelDefaults(product.toObject()));
     product.updated = new Date();
     await product.save();
     updated.push(product);

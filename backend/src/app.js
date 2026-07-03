@@ -11,6 +11,7 @@ const coreAuthRouter = require('./routes/coreRoutes/coreAuth');
 const coreLicenseRouter = require('./routes/coreRoutes/coreLicense');
 const coreApiRouter = require('./routes/coreRoutes/coreApi');
 const coreDownloadRouter = require('./routes/coreRoutes/coreDownloadRouter');
+const corePrintRouter = require('./routes/coreRoutes/corePrintRouter');
 const corePublicRouter = require('./routes/coreRoutes/corePublicRouter');
 const adminAuth = require('./controllers/coreControllers/adminAuth');
 const licenseLockMiddleware = require('./middleware/licenseLockMiddleware');
@@ -45,6 +46,7 @@ app.use('/api', coreLicenseRouter);
 app.use('/api', adminAuth.isValidAuthToken, licenseLockMiddleware, coreApiRouter);
 app.use('/api', adminAuth.isValidAuthToken, licenseLockMiddleware, erpApiRouter);
 app.use('/download', coreDownloadRouter);
+app.use('/print', corePrintRouter);
 app.use('/public', corePublicRouter);
 
 const frontendDist = path.join(__dirname, '../../frontend/dist');
@@ -53,9 +55,19 @@ const serveFrontend =
   (process.env.NODE_ENV === 'production' && fs.existsSync(frontendDist));
 
 if (serveFrontend) {
-  app.use(express.static(frontendDist));
-  app.get(/^(?!\/api|\/download|\/public).*/, (req, res, next) => {
+  app.use(
+    express.static(frontendDist, {
+      etag: true,
+      setHeaders(res, filePath) {
+        if (filePath.endsWith('index.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        }
+      },
+    })
+  );
+  app.get(/^(?!\/api|\/download|\/print|\/public).*/, (req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(frontendDist, 'index.html'), (err) => {
       if (err) next(err);
     });
