@@ -31,7 +31,12 @@ export default function UpdateSettingForm({ config, children, withUpload, upload
         settings.push({ settingKey: key, settingValue: value });
       }
 
-      dispatch(settingsAction.updateMany({ entity, jsonData: { settings } }));
+      dispatch(
+        settingsAction.updateMany({
+          entity,
+          jsonData: { settings, settingsCategory },
+        })
+      );
     }
   };
 

@@ -86,24 +86,38 @@ export default function UpdateItem({ config, UpdateForm }) {
       if (!dataToUpdate.client) {
         delete dataToUpdate.client;
       }
+      if (!dataToUpdate.supplier) {
+        delete dataToUpdate.supplier;
+      }
       if (dataToUpdate.customerName) {
         dataToUpdate.customerName = dataToUpdate.customerName.trim();
         if (!dataToUpdate.customerName) delete dataToUpdate.customerName;
       }
-      if (fieldsValue.date || fieldsValue.expiredDate) {
-        dataToUpdate.date = dayjs(fieldsValue.date).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
-        dataToUpdate.expiredDate = dayjs(fieldsValue.expiredDate).format(
-          'YYYY-MM-DDTHH:mm:ss.SSSZ'
-        );
+      if (dataToUpdate.supplierName) {
+        dataToUpdate.supplierName = dataToUpdate.supplierName.trim();
+        if (!dataToUpdate.supplierName) delete dataToUpdate.supplierName;
+      }
+      if (fieldsValue.date || fieldsValue.expiredDate || fieldsValue.expectedDate) {
+        if (fieldsValue.date) {
+          dataToUpdate.date = dayjs(fieldsValue.date).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+        }
+        if (fieldsValue.expiredDate) {
+          dataToUpdate.expiredDate = dayjs(fieldsValue.expiredDate).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+        }
+        if (fieldsValue.expectedDate) {
+          dataToUpdate.expectedDate = dayjs(fieldsValue.expectedDate).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+        }
       }
       if (fieldsValue.items) {
         let newList = [];
         fieldsValue.items
           .filter((item) => item && item.itemName)
           .map((item) => {
-            const { quantity, price, itemName, description, product } = item;
             const total = item.quantity * item.price;
-            newList.push({ total, quantity, price, itemName, description, product });
+            newList.push({
+              ...item,
+              total,
+            });
           });
         dataToUpdate.items = newList;
       }
@@ -129,6 +143,9 @@ export default function UpdateItem({ config, UpdateForm }) {
       }
       if (formData.expiredDate) {
         formData.expiredDate = dayjs(formData.expiredDate);
+      }
+      if (formData.expectedDate) {
+        formData.expectedDate = dayjs(formData.expectedDate);
       }
       if (!formData.taxRate) {
         formData.taxRate = 0;

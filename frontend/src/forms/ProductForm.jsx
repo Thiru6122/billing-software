@@ -5,6 +5,8 @@ import { useSelector } from 'react-redux';
 import useLanguage from '@/locale/useLanguage';
 import BarcodeField from '@/components/BarcodeField';
 import SelectAsync from '@/components/SelectAsync';
+import ProductCategorySelect from '@/components/ProductCategorySelect';
+import ProductHsnSuggest from '@/components/ProductHsnSuggest';
 import { selectCompanySettings } from '@/redux/settings/selectors';
 import { getDefaultLabelTemplate } from '@/utils/barcodePrint';
 
@@ -36,6 +38,7 @@ export default function ProductForm({ isUpdateForm = false }) {
       >
         <Input />
       </Form.Item>
+      <ProductHsnSuggest />
       <Form.Item label="SKU" name="sku">
         <Input placeholder="SKU-001" />
       </Form.Item>
@@ -46,9 +49,7 @@ export default function ProductForm({ isUpdateForm = false }) {
       >
         <BarcodeField />
       </Form.Item>
-      <Form.Item label={translate('category')} name="category">
-        <Input />
-      </Form.Item>
+      <ProductCategorySelect />
       <Form.Item label={translate('unit')} name="unit" initialValue="pcs">
         <Input />
       </Form.Item>
@@ -70,8 +71,23 @@ export default function ProductForm({ isUpdateForm = false }) {
       <Form.Item label={translate('min_quantity')} name="minQuantity" initialValue={0}>
         <InputNumber min={0} style={{ width: '100%' }} />
       </Form.Item>
-      <Form.Item label="HSN Code" name="hsnCode">
-        <Input placeholder="e.g. 6109" maxLength={8} />
+      <Form.Item
+        label={translate('hsn_code')}
+        name="hsnCode"
+        extra={translate('hsn_auto_assign_hint')}
+        rules={[
+          {
+            validator: (_, value) => {
+              if (!value) return Promise.resolve();
+              if (!/^\d{4}(\d{2})?(\d{2})?$/.test(String(value))) {
+                return Promise.reject(new Error(translate('hsn_code_invalid')));
+              }
+              return Promise.resolve();
+            },
+          },
+        ]}
+      >
+        <Input placeholder="e.g. 1515" maxLength={8} />
       </Form.Item>
       <Form.Item label="GST %" name="taxRate" initialValue={0}>
         <SelectAsync

@@ -108,6 +108,63 @@ function shouldRestoreStock(invoice) {
   return invoice.status === 'cancelled';
 }
 
+async function addPurchaseStock(purchase, storeId, adminId) {
+  if (purchase.stockAdded) return;
+  const Product = mongoose.model('Product');
+  const items = purchase.items || [];
+
+  for (const item of items) {
+    if (!item.product) continue;
+    const product = await adjustProductStock({
+      productId: item.product,
+      storeId,
+      delta: item.quantity,
+      movementType: 'purchase',
+      reference: `purchase:${purchase._id}`,
+      note: `Purchase #${purchase.number}`,
+      adminId,
+    });
+    if (item.price != null) {
+      await Product.findByIdAndUpdate(product._id, {
+        cost: Number(item.price) || product.cost,
+        updated: new Date(),
+      });
+    }
+  }
+
+  const Purchase = mongoose.model('Purchase');
+  await Purchase.findByIdAndUpdate(purchase._id, { stockAdded: true });
+}
+
+async function reversePurchaseStock(purchase, storeId, adminId) {
+  if (!purchase.stockAdded) return;
+  const items = purchase.items || [];
+
+  for (const item of items) {
+    if (!item.product) continue;
+    await adjustProductStock({
+      productId: item.product,
+      storeId,
+      delta: -item.quantity,
+      movementType: 'out',
+      reference: `purchase:${purchase._id}`,
+      note: `Reversed purchase #${purchase.number}`,
+      adminId,
+    });
+  }
+
+  const Purchase = mongoose.model('Purchase');
+  await Purchase.findByIdAndUpdate(purchase._id, { stockAdded: false });
+}
+
+function shouldAddPurchaseStock(purchase) {
+  return purchase.status === 'received';
+}
+
+function shouldReversePurchaseStock(purchase) {
+  return purchase.status === 'cancelled';
+}
+
 module.exports = {
   adjustProductStock,
   recordMovement,
@@ -116,4 +173,8 @@ module.exports = {
   restoreInvoiceStock,
   shouldDeductStock,
   shouldRestoreStock,
+  addPurchaseStock,
+  reversePurchaseStock,
+  shouldAddPurchaseStock,
+  shouldReversePurchaseStock,
 };

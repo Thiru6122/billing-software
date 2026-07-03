@@ -57,6 +57,7 @@ export default function Product() {
     { title: translate('pack_date'), dataIndex: 'packDate' },
     { title: translate('expiry_text'), dataIndex: 'expiryText' },
     { title: translate('category'), dataIndex: 'category' },
+    { title: translate('hsn_code'), dataIndex: 'hsnCode' },
     { title: translate('unit'), dataIndex: 'unit' },
     { title: translate('quantity'), dataIndex: 'quantity' },
     { title: translate('price'), dataIndex: 'price' },

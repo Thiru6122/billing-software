@@ -12,6 +12,7 @@ const labelPool = require('./labelPool');
 const printBarcodeLabels = require('./printBarcodeLabels');
 const create = require('./create');
 const update = require('./update');
+const suggestHsn = require('./suggestHsn');
 
 function modelController() {
   const methods = createCRUDController('Product');
@@ -26,6 +27,7 @@ function modelController() {
   methods.generateLabelBatch = (req, res) => generateLabelBatch(req, res);
   methods.labelPool = (req, res) => labelPool(req, res);
   methods.printBarcodeLabels = (req, res) => printBarcodeLabels(req, res);
+  methods.suggestHsn = (req, res) => suggestHsn(req, res);
   return methods;
 }
 

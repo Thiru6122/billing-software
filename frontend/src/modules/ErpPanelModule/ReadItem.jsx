@@ -159,30 +159,44 @@ export default function ReadItem({ config, selectedItem }) {
               {translate('Print')}
             </Button>
           ),
-          <Button
-            key={`${uniqueId()}`}
-            className="no-print"
-            onClick={() => {
-              window.open(
-                `${DOWNLOAD_BASE_URL}${entity}/${entity}-${currentErp._id}.pdf`,
-                '_blank'
-              );
-            }}
-            icon={<FilePdfOutlined />}
-          >
-            {translate('Download PDF')}
-          </Button>,
-          <Button
-            key={`${uniqueId()}`}
-            className="no-print"
-            loading={mailInProgress}
-            onClick={() => {
-              send(currentErp._id);
-            }}
-            icon={<MailOutlined />}
-          >
-            {translate('Send by Email')}
-          </Button>,
+          entity === 'purchase' && (
+            <Button
+              key={`${uniqueId()}`}
+              className="no-print"
+              onClick={() => openDocumentPrint(entity, currentErp._id)}
+              icon={<PrinterOutlined />}
+            >
+              {translate('Print')}
+            </Button>
+          ),
+          (entity === 'invoice' || entity === 'purchase') && (
+            <Button
+              key={`${uniqueId()}`}
+              className="no-print"
+              onClick={() => {
+                window.open(
+                  `${DOWNLOAD_BASE_URL}${entity}/${entity}-${currentErp._id}.pdf`,
+                  '_blank'
+                );
+              }}
+              icon={<FilePdfOutlined />}
+            >
+              {translate('Download PDF')}
+            </Button>
+          ),
+          entity !== 'purchase' && (
+            <Button
+              key={`${uniqueId()}`}
+              className="no-print"
+              loading={mailInProgress}
+              onClick={() => {
+                send(currentErp._id);
+              }}
+              icon={<MailOutlined />}
+            >
+              {translate('Send by Email')}
+            </Button>
+          ),
           <Button
             key={`${uniqueId()}`}
             className="no-print"
@@ -244,14 +258,27 @@ export default function ReadItem({ config, selectedItem }) {
             })}
             style={{
               margin: '0 32px',
+              display: entity === 'purchase' ? 'none' : undefined,
             }}
           />
         </Row>
       </PageHeader>
       <div id="invoice-print-area">
       <Divider dashed className="no-print" />
-      <Descriptions title={`${translate('Client')} : ${currentErp.customerName || currentErp.client?.name || translate('walk_in_customer')}`}>
-        {currentErp.client ? (
+      <Descriptions
+        title={
+          entity === 'purchase'
+            ? `${translate('supplier')} : ${currentErp.supplierName || currentErp.supplier?.name || translate('supplier_name_optional')}`
+            : `${translate('Client')} : ${currentErp.customerName || currentErp.client?.name || translate('walk_in_customer')}`
+        }
+      >
+        {entity === 'purchase' && currentErp.supplier ? (
+          <>
+            <Descriptions.Item label={translate('Address')}>{currentErp.supplier.address}</Descriptions.Item>
+            <Descriptions.Item label={translate('email')}>{currentErp.supplier.email}</Descriptions.Item>
+            <Descriptions.Item label={translate('Phone')}>{currentErp.supplier.phone}</Descriptions.Item>
+          </>
+        ) : currentErp.client ? (
           <>
             <Descriptions.Item label={translate('Address')}>{client.address}</Descriptions.Item>
             <Descriptions.Item label={translate('email')}>{client.email}</Descriptions.Item>

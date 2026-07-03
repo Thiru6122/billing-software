@@ -25,6 +25,7 @@ const routerApp = (entity, controller) => {
   }
 
   if (entity === 'product') {
+    router.route(`/${entity}/suggestHsn`).get(catchErrors(controller['suggestHsn']));
     router.route(`/${entity}/barcode/:code`).get(catchErrors(controller['lookupByBarcode']));
     router.route(`/${entity}/generateLabelBatch`).post(catchErrors(controller['generateLabelBatch']));
     router.route(`/${entity}/labelPool`).get(catchErrors(controller['labelPool']));

@@ -87,14 +87,21 @@ export default function CreateItem({ config, CreateForm }) {
   }, [isSuccess]);
 
   const onSubmit = (fieldsValue) => {
-    if (fieldsValue) {
-      if (!fieldsValue.client) {
-        delete fieldsValue.client;
-      }
-      if (fieldsValue.customerName) {
-        fieldsValue.customerName = fieldsValue.customerName.trim();
-        if (!fieldsValue.customerName) delete fieldsValue.customerName;
-      }
+      if (fieldsValue) {
+        if (!fieldsValue.client) {
+          delete fieldsValue.client;
+        }
+        if (!fieldsValue.supplier) {
+          delete fieldsValue.supplier;
+        }
+        if (fieldsValue.customerName) {
+          fieldsValue.customerName = fieldsValue.customerName.trim();
+          if (!fieldsValue.customerName) delete fieldsValue.customerName;
+        }
+        if (fieldsValue.supplierName) {
+          fieldsValue.supplierName = fieldsValue.supplierName.trim();
+          if (!fieldsValue.supplierName) delete fieldsValue.supplierName;
+        }
       if (fieldsValue.items) {
         let newList = [...fieldsValue.items].filter((item) => item && item.itemName);
         newList.map((item) => {
@@ -107,6 +114,10 @@ export default function CreateItem({ config, CreateForm }) {
       }
       if (entity === 'invoice' && (!fieldsValue.items || fieldsValue.items.length === 0)) {
         message.error(translate('scan_at_least_one_product'));
+        return;
+      }
+      if (entity === 'purchase' && (!fieldsValue.items || fieldsValue.items.length === 0)) {
+        message.error(translate('add_at_least_one_product'));
         return;
       }
     }

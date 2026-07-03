@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const { adjustProductStock } = require('@/services/stockService');
 const { resolveProductBarcode } = require('@/services/barcodeLabelService');
 const { applyProductLabelDefaults } = require('@/utils/productLabelDefaults');
+const { resolveProductHsn } = require('@/services/productHsnService');
 
 /**
  * Import products from JSON array (parsed CSV on frontend).
@@ -37,6 +38,8 @@ const importProducts = async (req, res) => {
     const unit = (row.unit || row.Unit || 'pcs').toString().trim();
     const minQuantity = Number(row.minQuantity ?? row.min_quantity ?? row.MinQuantity ?? 0) || 0;
     const category = (row.category || row.Category || '').toString().trim();
+    const hsnCode = (row.hsnCode || row.HSN || row.hsn || '').toString().trim();
+    const taxRate = Number(row.taxRate ?? row.gst ?? row.GST ?? row.tax ?? 0) || 0;
     const labelFields = applyProductLabelDefaults({
       enterpriseLine1: row.enterpriseLine1 || row.EnterpriseLine1 || row.enterprise_line1,
       companyName: row.companyName || row.CompanyName || row.company_name,
@@ -46,6 +49,20 @@ const importProducts = async (req, res) => {
 
     try {
       let product;
+      let resolvedHsn;
+      try {
+        resolvedHsn = await resolveProductHsn({
+          storeId: req.storeId,
+          hsnCode,
+          category,
+          taxRate,
+          name,
+        });
+      } catch (err) {
+        results.errors.push({ row: i + 1, message: err.message });
+        continue;
+      }
+
       if (sku) {
         product = await Product.findOne({ store: req.storeId, sku, removed: false });
       }
@@ -66,6 +83,8 @@ const importProducts = async (req, res) => {
         if (unit) product.unit = unit;
         product.minQuantity = minQuantity;
         if (category) product.category = category;
+        product.hsnCode = resolvedHsn.hsnCode || product.hsnCode;
+        product.taxRate = resolvedHsn.taxRate ?? product.taxRate;
         Object.assign(product, labelFields);
         product.updated = new Date();
         await product.save();
@@ -98,6 +117,8 @@ const importProducts = async (req, res) => {
           minQuantity,
           unit,
           category: category || undefined,
+          hsnCode: resolvedHsn.hsnCode || undefined,
+          taxRate: resolvedHsn.taxRate,
           enabled: true,
           removed: false,
         });

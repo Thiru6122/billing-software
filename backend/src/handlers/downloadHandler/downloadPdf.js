@@ -21,7 +21,7 @@ module.exports = downloadPdf = async (req, res, { directory, id }) => {
 
       await custom.generatePdf(
         modelName,
-        { filename: folderPath, format: folderPath === 'invoice' ? 'Letter' : 'A4', targetLocation },
+        { filename: folderPath, format: 'A4', targetLocation },
         result
       );
 

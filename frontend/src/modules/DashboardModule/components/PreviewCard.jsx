@@ -12,6 +12,9 @@ const colours = {
   paid: '#95de64',
   declined: '#ff4d4f',
   accepted: '#95de64',
+  ordered: '#1890ff',
+  received: '#52c41a',
+  cancelled: '#ff4d4f',
   cyan: '#13c2c2',
   purple: '#722ed1',
   expired: '#614700',
@@ -71,6 +74,13 @@ const defaultInvoiceStatistics = [
   },
 ];
 
+const defaultPurchaseStatistics = [
+  { tag: 'draft', value: 0 },
+  { tag: 'ordered', value: 0 },
+  { tag: 'received', value: 0 },
+  { tag: 'cancelled', value: 0 },
+];
+
 const PreviewState = ({ tag, value }) => {
   const translate = useLanguage();
   return (
@@ -94,6 +104,7 @@ export default function PreviewCard({
   statistics = defaultStatistics,
   isLoading = false,
   entity = 'invoice',
+  colSpan = 12,
 }) {
   const statisticsMap = useMemo(() => {
     if (entity === 'invoice') {
@@ -103,14 +114,21 @@ export default function PreviewCard({
           : null;
         return matchedStat || defaultStat;
       });
-    } else {
-      return defaultStatistics.map((defaultStat) => {
+    }
+    if (entity === 'purchase') {
+      return defaultPurchaseStatistics.map((defaultStat) => {
         const matchedStat = Array.isArray(statistics)
           ? statistics.find((stat) => stat.tag === defaultStat.tag)
           : null;
         return matchedStat || defaultStat;
       });
     }
+    return defaultStatistics.map((defaultStat) => {
+      const matchedStat = Array.isArray(statistics)
+        ? statistics.find((stat) => stat.tag === defaultStat.tag)
+        : null;
+      return matchedStat || defaultStat;
+    });
   }, [statistics, entity]);
 
   const customSort = (a, b) => {
@@ -125,7 +143,7 @@ export default function PreviewCard({
       xs={{ span: 24 }}
       sm={{ span: 24 }}
       md={{ span: 12 }}
-      lg={{ span: 12 }}
+      lg={{ span: colSpan }}
     >
       <div className="pad20">
         <h3

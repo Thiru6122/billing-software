@@ -12,6 +12,8 @@ import useResponsive from '@/hooks/useResponsive';
 
 import {
   BarcodeOutlined,
+  ShoppingCartOutlined,
+  TruckOutlined,
   SettingOutlined,
   CustomerServiceOutlined,
   ContainerOutlined,
@@ -61,9 +63,19 @@ function Sidebar({ collapsible, isMobile = false }) {
       label: <Link to={'/customer'}>{translate('customers')}</Link>,
     },
     {
+      key: 'supplier',
+      icon: <TruckOutlined />,
+      label: <Link to={'/supplier'}>{translate('suppliers')}</Link>,
+    },
+    {
       key: 'product',
       icon: <TagOutlined />,
       label: <Link to={'/product'}>{translate('products')}</Link>,
+    },
+    {
+      key: 'productCategory',
+      icon: <TagsOutlined />,
+      label: <Link to={'/product-categories'}>{translate('product_categories')}</Link>,
     },
     {
       key: 'inventory',
@@ -80,6 +92,11 @@ function Sidebar({ collapsible, isMobile = false }) {
       key: 'invoice',
       icon: <ContainerOutlined />,
       label: <Link to={'/invoice'}>{translate('invoices')}</Link>,
+    },
+    {
+      key: 'purchase',
+      icon: <ShoppingCartOutlined />,
+      label: <Link to={'/purchase'}>{translate('purchases')}</Link>,
     },
     {
       key: 'quote',

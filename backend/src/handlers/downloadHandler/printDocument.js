@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { buildDocumentHtml, wrapHtmlForPrint } = require('@/controllers/pdfController');
 
-const SUPPORTED = new Set(['invoice', 'quote', 'payment', 'offer']);
+const SUPPORTED = new Set(['invoice', 'quote', 'payment', 'offer', 'purchase']);
 
 module.exports = printDocument = async (req, res, { directory, id }) => {
   try {

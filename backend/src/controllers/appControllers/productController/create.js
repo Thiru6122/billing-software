@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const { logAudit } = require('@/services/auditService');
 const { resolveProductBarcode } = require('@/services/barcodeLabelService');
 const { applyProductLabelDefaults } = require('@/utils/productLabelDefaults');
+const { resolveProductHsn } = require('@/services/productHsnService');
 
 const create = async (req, res) => {
   const Model = mongoose.model('Product');
@@ -24,6 +25,23 @@ const create = async (req, res) => {
   }
   req.body.barcode = barcode;
   Object.assign(req.body, applyProductLabelDefaults(req.body));
+
+  try {
+    const hsnFields = await resolveProductHsn({
+      storeId: req.storeId,
+      hsnCode: req.body.hsnCode,
+      category: req.body.category,
+      taxRate: req.body.taxRate,
+      name: req.body.name,
+    });
+    Object.assign(req.body, hsnFields);
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      result: null,
+      message: err.message,
+    });
+  }
 
   const result = await new Model({ ...req.body }).save();
 

@@ -44,6 +44,12 @@ export default function DashboardModule() {
     onFetch: fetchPayemntsStats,
   } = useOnFetch();
 
+  const {
+    result: purchaseResult,
+    isLoading: purchaseLoading,
+    onFetch: fetchPurchasesStats,
+  } = useOnFetch();
+
   const { result: clientResult, isLoading: clientLoading } = useFetch(() =>
     request.summary({ entity: 'client' })
   );
@@ -59,6 +65,7 @@ export default function DashboardModule() {
       fetchInvoicesStats(getStatsData({ entity: 'invoice', currency }));
       fetchQuotesStats(getStatsData({ entity: 'quote', currency }));
       fetchPayemntsStats(getStatsData({ entity: 'payment', currency }));
+      fetchPurchasesStats(getStatsData({ entity: 'purchase', currency }));
     }
   }, [money_format_settings.default_currency_code]);
 
@@ -92,6 +99,24 @@ export default function DashboardModule() {
     },
   ];
 
+  const purchaseTableColumns = [
+    { title: translate('number'), dataIndex: 'number' },
+    {
+      title: translate('supplier'),
+      dataIndex: 'supplierName',
+      render: (_, record) => record.supplierName || record.supplier?.name || '—',
+    },
+    {
+      title: translate('Total'),
+      dataIndex: 'total',
+      onCell: () => ({
+        style: { textAlign: 'right', whiteSpace: 'nowrap', direction: 'ltr' },
+      }),
+      render: (total, record) => moneyFormatter({ amount: total, currency_code: record.currency }),
+    },
+    { title: translate('Status'), dataIndex: 'status' },
+  ];
+
   const entityData = [
     {
       result: invoiceResult,
@@ -105,6 +130,12 @@ export default function DashboardModule() {
       entity: 'quote',
       title: translate('quote'),
     },
+    {
+      result: purchaseResult,
+      isLoading: purchaseLoading,
+      entity: 'purchase',
+      title: translate('purchases'),
+    },
   ];
 
   const statisticCards = entityData.map((data, index) => {
@@ -116,6 +147,7 @@ export default function DashboardModule() {
         title={title}
         isLoading={isLoading}
         entity={entity}
+        colSpan={8}
         statistics={
           !isLoading &&
           result?.performance?.map((item) => ({
@@ -143,6 +175,12 @@ export default function DashboardModule() {
             prefix={translate('This month')}
             isLoading={quoteLoading}
             data={quoteResult?.total}
+          />
+          <SummaryCard
+            title={translate('purchases')}
+            prefix={translate('This month')}
+            isLoading={purchaseLoading}
+            data={purchaseResult?.total}
           />
           <SummaryCard
             title={translate('paid')}
@@ -182,7 +220,7 @@ export default function DashboardModule() {
         </Row>
         <div className="space30"></div>
         <Row gutter={[32, 32]}>
-          <Col className="gutter-row w-full" sm={{ span: 24 }} lg={{ span: 12 }}>
+          <Col className="gutter-row w-full" sm={{ span: 24 }} lg={{ span: 8 }}>
             <div className="whiteBox shadow pad20" style={{ height: '100%' }}>
               <h3 style={{ color: '#22075e', marginBottom: 5, padding: '0 20px 20px' }}>
                 {translate('Recent Invoices')}
@@ -192,12 +230,21 @@ export default function DashboardModule() {
             </div>
           </Col>
 
-          <Col className="gutter-row w-full" sm={{ span: 24 }} lg={{ span: 12 }}>
+          <Col className="gutter-row w-full" sm={{ span: 24 }} lg={{ span: 8 }}>
             <div className="whiteBox shadow pad20" style={{ height: '100%' }}>
               <h3 style={{ color: '#22075e', marginBottom: 5, padding: '0 20px 20px' }}>
                 {translate('Recent Quotes')}
               </h3>
               <RecentTable entity={'quote'} dataTableColumns={dataTableColumns} />
+            </div>
+          </Col>
+
+          <Col className="gutter-row w-full" sm={{ span: 24 }} lg={{ span: 8 }}>
+            <div className="whiteBox shadow pad20" style={{ height: '100%' }}>
+              <h3 style={{ color: '#22075e', marginBottom: 5, padding: '0 20px 20px' }}>
+                {translate('recent_purchases')}
+              </h3>
+              <RecentTable entity={'purchase'} dataTableColumns={purchaseTableColumns} />
             </div>
           </Col>
         </Row>

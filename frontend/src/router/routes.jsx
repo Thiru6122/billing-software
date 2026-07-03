@@ -13,6 +13,11 @@ const InvoiceCreate = lazy(() => import('@/pages/Invoice/InvoiceCreate'));
 const InvoiceRead = lazy(() => import('@/pages/Invoice/InvoiceRead'));
 const InvoiceUpdate = lazy(() => import('@/pages/Invoice/InvoiceUpdate'));
 const InvoiceRecordPayment = lazy(() => import('@/pages/Invoice/InvoiceRecordPayment'));
+const Purchase = lazy(() => import('@/pages/Purchase'));
+const PurchaseCreate = lazy(() => import('@/pages/Purchase/PurchaseCreate'));
+const PurchaseRead = lazy(() => import('@/pages/Purchase/PurchaseRead'));
+const PurchaseUpdate = lazy(() => import('@/pages/Purchase/PurchaseUpdate'));
+const Supplier = lazy(() => import('@/pages/Supplier'));
 const Quote = lazy(() => import('@/pages/Quote/index'));
 const QuoteCreate = lazy(() => import('@/pages/Quote/QuoteCreate'));
 const QuoteRead = lazy(() => import('@/pages/Quote/QuoteRead'));
@@ -25,6 +30,7 @@ const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const PaymentMode = lazy(() => import('@/pages/PaymentMode'));
 const Taxes = lazy(() => import('@/pages/Taxes'));
 const Product = lazy(() => import('@/pages/Product'));
+const ProductCategory = lazy(() => import('@/pages/ProductCategory'));
 const Inventory = lazy(() => import('@/pages/Inventory'));
 const Barcodes = lazy(() => import('@/pages/Barcodes'));
 
@@ -60,6 +66,10 @@ let routes = {
       element: <Product />,
     },
     {
+      path: '/product-categories',
+      element: <ProductCategory />,
+    },
+    {
       path: '/inventory',
       element: <Inventory />,
     },
@@ -87,6 +97,26 @@ let routes = {
     {
       path: '/invoice/pay/:id',
       element: <InvoiceRecordPayment />,
+    },
+    {
+      path: '/purchase',
+      element: <Purchase />,
+    },
+    {
+      path: '/purchase/create',
+      element: <PurchaseCreate />,
+    },
+    {
+      path: '/purchase/read/:id',
+      element: <PurchaseRead />,
+    },
+    {
+      path: '/purchase/update/:id',
+      element: <PurchaseUpdate />,
+    },
+    {
+      path: '/supplier',
+      element: <Supplier />,
     },
     {
       path: '/quote',
