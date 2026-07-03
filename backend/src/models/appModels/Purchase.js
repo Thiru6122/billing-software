@@ -20,6 +20,7 @@ const purchaseSchema = new mongoose.Schema({
       hsnCode: { type: String, trim: true },
       gstRate: { type: Number, default: 0 },
       description: { type: String },
+      unit: { type: String, trim: true, default: 'kg' },
       quantity: { type: Number, default: 1, required: true },
       price: { type: Number, required: true },
       taxableValue: { type: Number, default: 0 },

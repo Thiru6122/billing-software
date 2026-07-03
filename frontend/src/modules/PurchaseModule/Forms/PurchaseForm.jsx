@@ -4,19 +4,23 @@ import { Form, Input, InputNumber, Button, Select, Divider, Row, Col } from 'ant
 import { PlusOutlined } from '@ant-design/icons';
 import { DatePicker } from 'antd';
 import AutoCompleteAsync from '@/components/AutoCompleteAsync';
-import InvoiceBarcodeScanner from '@/components/InvoiceBarcodeScanner';
-import ItemRow from '@/modules/ErpPanelModule/ItemRow';
+import RawMaterialRow from '@/modules/PurchaseModule/Forms/RawMaterialRow';
 import MoneyInputFormItem from '@/components/MoneyInputFormItem';
-import { selectFinanceSettings, selectCompanySettings } from '@/redux/settings/selectors';
+import { selectFinanceSettings, selectSettings } from '@/redux/settings/selectors';
 import { useDate } from '@/settings';
 import useLanguage from '@/locale/useLanguage';
 import { useSelector } from 'react-redux';
 import { request } from '@/request';
-import { INDIAN_STATES, inferGstType, computeInvoiceGstFromItems } from '@/constants/indianStates';
+import calculate from '@/utils/calculate';
 
 export default function PurchaseForm({ current = null }) {
+  const { isLoading: settingsLoading } = useSelector(selectSettings);
   const { last_purchase_number } = useSelector(selectFinanceSettings);
-  if (last_purchase_number === undefined) return null;
+
+  if (last_purchase_number === undefined && settingsLoading) {
+    return null;
+  }
+
   return <LoadPurchaseForm current={current} />;
 }
 
@@ -25,63 +29,47 @@ function LoadPurchaseForm({ current = null }) {
   const form = Form.useFormInstance();
   const { dateFormat } = useDate();
   const { last_purchase_number } = useSelector(selectFinanceSettings);
-  const companySettings = useSelector(selectCompanySettings) || {};
-  const companyState = companySettings.company_state || 'Tamil Nadu';
 
-  const [subTotal, setSubTotal] = useState(0);
   const [total, setTotal] = useState(0);
-  const [taxTotal, setTaxTotal] = useState(0);
-  const [cgstTotal, setCgstTotal] = useState(0);
-  const [sgstTotal, setSgstTotal] = useState(0);
-  const [igstTotal, setIgstTotal] = useState(0);
-  const [gstType, setGstType] = useState('intra');
-  const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
-  const [lastNumber, setLastNumber] = useState(() => last_purchase_number + 1);
+  const [lastNumber, setLastNumber] = useState(() => (last_purchase_number ?? 0) + 1);
+  const currentYear = new Date().getFullYear();
 
-  const placeOfSupply = Form.useWatch('placeOfSupply', form);
   const supplierId = Form.useWatch('supplier', form);
   const items = Form.useWatch('items', form) || [];
 
   useEffect(() => {
     if (current) {
-      setGstType(current.gstType || 'intra');
-      setCurrentYear(current.year);
       setLastNumber(current.number);
-    } else if (!form.getFieldValue('placeOfSupply')) {
-      form.setFieldValue('placeOfSupply', companyState);
+    } else {
+      const existingItems = form.getFieldValue('items');
+      if (!existingItems || existingItems.length === 0) {
+        form.setFieldValue('items', [{ quantity: 1, unit: 'kg', gstRate: 0 }]);
+      }
+      form.setFieldValue('taxRate', 0);
       form.setFieldValue('gstType', 'intra');
+      form.setFieldValue('year', currentYear);
     }
-  }, [current, companyState, form]);
-
-  useEffect(() => {
-    if (placeOfSupply) {
-      const nextType = inferGstType(placeOfSupply, companyState);
-      setGstType(nextType);
-      form.setFieldValue('gstType', nextType);
-    }
-  }, [placeOfSupply, companyState, form]);
+  }, [current, currentYear, form]);
 
   useEffect(() => {
     if (!supplierId || typeof supplierId !== 'string') return;
     request.read({ entity: 'supplier', id: supplierId }).then((res) => {
-      if (res?.success && res.result) {
-        if (res.result.state) form.setFieldValue('placeOfSupply', res.result.state);
-        if (res.result.gstin) form.setFieldValue('supplierGstin', res.result.gstin);
-        if (res.result.name) form.setFieldValue('supplierName', res.result.name);
+      if (res?.success && res.result?.name) {
+        form.setFieldValue('supplierName', res.result.name);
       }
     });
   }, [supplierId, form]);
 
   useEffect(() => {
-    const totals = computeInvoiceGstFromItems(items, gstType);
-    setSubTotal(totals.subTotal);
-    setTaxTotal(totals.taxTotal);
-    setCgstTotal(totals.cgstTotal);
-    setSgstTotal(totals.sgstTotal);
-    setIgstTotal(totals.igstTotal);
-    setTotal(totals.total);
-    form.setFieldValue('taxRate', totals.taxRate);
-  }, [items, gstType, form]);
+    let sum = 0;
+    items.forEach((item) => {
+      if (item?.quantity && item?.price) {
+        sum = calculate.add(sum, calculate.multiply(item.quantity, item.price));
+      }
+    });
+    setTotal(sum);
+    form.setFieldValue('taxRate', 0);
+  }, [items, form]);
 
   return (
     <>
@@ -104,31 +92,27 @@ function LoadPurchaseForm({ current = null }) {
           </Form.Item>
         </Col>
         <Col span={8}>
-          <Form.Item name="supplierGstin" label="Supplier GSTIN">
-            <Input placeholder="29ABCDE1234F1Z5" maxLength={15} style={{ textTransform: 'uppercase' }} />
+          <Form.Item
+            name="date"
+            label={translate('purchase_date')}
+            rules={[{ required: true, type: 'object' }]}
+            initialValue={dayjs()}
+          >
+            <DatePicker style={{ width: '100%' }} format={dateFormat} />
           </Form.Item>
         </Col>
-        <Col span={8}>
-          <Form.Item name="placeOfSupply" label="Place of supply" rules={[{ required: true }]}>
-            <Select
-              showSearch
-              placeholder="Select state"
-              options={INDIAN_STATES.map((s) => ({ value: s, label: s }))}
-            />
-          </Form.Item>
-        </Col>
-        <Col span={3}>
-          <Form.Item label={translate('number')} name="number" initialValue={lastNumber} rules={[{ required: true }]}>
+        <Col span={6}>
+          <Form.Item
+            label={translate('bill_number')}
+            name="number"
+            initialValue={lastNumber}
+            rules={[{ required: true }]}
+          >
             <InputNumber min={1} style={{ width: '100%' }} />
           </Form.Item>
         </Col>
-        <Col span={3}>
-          <Form.Item label={translate('year')} name="year" initialValue={currentYear} rules={[{ required: true }]}>
-            <InputNumber style={{ width: '100%' }} />
-          </Form.Item>
-        </Col>
-        <Col span={5}>
-          <Form.Item label={translate('status')} name="status" initialValue="draft">
+        <Col span={6}>
+          <Form.Item label={translate('status')} name="status" initialValue="received">
             <Select
               options={[
                 { value: 'draft', label: translate('draft') },
@@ -139,61 +123,68 @@ function LoadPurchaseForm({ current = null }) {
             />
           </Form.Item>
         </Col>
-        <Col span={8}>
-          <Form.Item name="date" label={translate('Date')} rules={[{ required: true, type: 'object' }]} initialValue={dayjs()}>
-            <DatePicker style={{ width: '100%' }} format={dateFormat} />
-          </Form.Item>
-        </Col>
-        <Col span={8}>
-          <Form.Item name="expectedDate" label={translate('expected_date')} initialValue={dayjs().add(7, 'days')}>
-            <DatePicker style={{ width: '100%' }} format={dateFormat} />
-          </Form.Item>
-        </Col>
-        <Col span={8}>
+        <Col span={12}>
           <Form.Item label={translate('Note')} name="notes">
-            <Input />
+            <Input placeholder={translate('purchase_notes_placeholder')} />
           </Form.Item>
         </Col>
       </Row>
+
       <AlertHint translate={translate} />
       <Divider dashed />
+
       <Row gutter={[12, 12]} className="invoice-items-header">
-        <Col md={6}><p>{translate('Item')}</p></Col>
-        <Col md={2}><p>HSN</p></Col>
-        <Col md={3}><p>{translate('description')}</p></Col>
-        <Col md={2}><p>{translate('Quantity')}</p></Col>
-        <Col md={4}><p>{translate('cost')}</p></Col>
-        <Col md={3}><p>GST</p></Col>
-        <Col md={4}><p>{translate('line_total')}</p></Col>
+        <Col md={8}><p>{translate('raw_material')}</p></Col>
+        <Col md={3}><p>{translate('unit')}</p></Col>
+        <Col md={4}><p>{translate('Quantity')}</p></Col>
+        <Col md={4}><p>{translate('rate_per_unit')}</p></Col>
+        <Col md={4}><p>{translate('amount')}</p></Col>
       </Row>
+
       <Form.List name="items">
         {(fields, { add, remove }) => (
           <>
-            <InvoiceBarcodeScanner add={add} />
             {fields.map((field) => (
-              <ItemRow
-                key={field.key}
-                remove={remove}
-                field={field}
-                current={current}
-                scanOnly={false}
-                showHsn={true}
-              />
+              <RawMaterialRow key={field.key} remove={remove} field={field} current={current} />
             ))}
+            <Form.Item>
+              <Button type="dashed" onClick={() => add({ quantity: 1, unit: 'kg', gstRate: 0 })} block icon={<PlusOutlined />}>
+                {translate('add_raw_material')}
+              </Button>
+            </Form.Item>
           </>
         )}
       </Form.List>
+
       <Divider dashed />
-      <TotalsBlock
-        translate={translate}
-        subTotal={subTotal}
-        taxTotal={taxTotal}
-        cgstTotal={cgstTotal}
-        sgstTotal={sgstTotal}
-        igstTotal={igstTotal}
-        total={total}
-        gstType={gstType}
-      />
+
+      <Form.Item name="year" hidden initialValue={currentYear}>
+        <InputNumber />
+      </Form.Item>
+      <Form.Item name="taxRate" hidden initialValue={0}>
+        <InputNumber />
+      </Form.Item>
+      <Form.Item name="gstType" hidden initialValue="intra">
+        <Input />
+      </Form.Item>
+
+      <div style={{ width: '100%', float: 'right' }}>
+        <Row gutter={[12, -5]}>
+          <Col span={5}>
+            <Form.Item>
+              <Button type="primary" htmlType="submit" icon={<PlusOutlined />} block>
+                {translate('Save')}
+              </Button>
+            </Form.Item>
+          </Col>
+          <Col span={4} offset={10}>
+            <p style={{ textAlign: 'right', margin: 0, paddingTop: 5 }}>{translate('Total')} :</p>
+          </Col>
+          <Col span={5}>
+            <MoneyInputFormItem readOnly value={total} />
+          </Col>
+        </Row>
+      </div>
     </>
   );
 }
@@ -201,69 +192,7 @@ function LoadPurchaseForm({ current = null }) {
 function AlertHint({ translate }) {
   return (
     <div style={{ marginBottom: 8, color: '#666', fontSize: 12 }}>
-      {translate('purchase_stock_hint')}
-    </div>
-  );
-}
-
-function TotalsBlock({ translate, subTotal, taxTotal, cgstTotal, sgstTotal, igstTotal, total, gstType }) {
-  return (
-    <div style={{ width: '100%', float: 'right' }}>
-      <Row gutter={[12, -5]}>
-        <Col span={5}>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" icon={<PlusOutlined />} block>
-              {translate('Save')}
-            </Button>
-          </Form.Item>
-        </Col>
-        <Col span={4} offset={10}>
-          <p style={{ textAlign: 'right', margin: 0, paddingTop: 5 }}>Product value (excl. GST) :</p>
-        </Col>
-        <Col span={5}>
-          <MoneyInputFormItem readOnly value={subTotal} />
-        </Col>
-      </Row>
-      <Form.Item name="taxRate" hidden rules={[{ required: true }]}>
-        <InputNumber />
-      </Form.Item>
-      <Form.Item name="gstType" hidden>
-        <Input />
-      </Form.Item>
-      <Row gutter={[12, -5]}>
-        <Col span={4} offset={15}>
-          <p style={{ textAlign: 'right', margin: 0, paddingTop: 5 }}>GST :</p>
-        </Col>
-        <Col span={5}>
-          <MoneyInputFormItem readOnly value={taxTotal} />
-        </Col>
-      </Row>
-      {gstType === 'intra' && taxTotal > 0 && (
-        <>
-          <Row gutter={[12, -5]}>
-            <Col span={4} offset={15}><p style={{ textAlign: 'right', margin: 0, paddingTop: 5 }}>CGST :</p></Col>
-            <Col span={5}><MoneyInputFormItem readOnly value={cgstTotal} /></Col>
-          </Row>
-          <Row gutter={[12, -5]}>
-            <Col span={4} offset={15}><p style={{ textAlign: 'right', margin: 0, paddingTop: 5 }}>SGST :</p></Col>
-            <Col span={5}><MoneyInputFormItem readOnly value={sgstTotal} /></Col>
-          </Row>
-        </>
-      )}
-      {gstType === 'inter' && taxTotal > 0 && (
-        <Row gutter={[12, -5]}>
-          <Col span={4} offset={15}><p style={{ textAlign: 'right', margin: 0, paddingTop: 5 }}>IGST :</p></Col>
-          <Col span={5}><MoneyInputFormItem readOnly value={igstTotal} /></Col>
-        </Row>
-      )}
-      <Row gutter={[12, -5]}>
-        <Col span={4} offset={15}>
-          <p style={{ textAlign: 'right', margin: 0, paddingTop: 5 }}>{translate('Total')} :</p>
-        </Col>
-        <Col span={5}>
-          <MoneyInputFormItem readOnly value={total} />
-        </Col>
-      </Row>
+      {translate('raw_material_purchase_hint')}
     </div>
   );
 }

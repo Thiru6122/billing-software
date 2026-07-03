@@ -117,7 +117,7 @@ export default function CreateItem({ config, CreateForm }) {
         return;
       }
       if (entity === 'purchase' && (!fieldsValue.items || fieldsValue.items.length === 0)) {
-        message.error(translate('add_at_least_one_product'));
+        message.error(translate('add_at_least_one_raw_material'));
         return;
       }
     }

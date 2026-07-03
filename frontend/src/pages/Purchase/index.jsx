@@ -10,7 +10,7 @@ export default function Purchase() {
   const { moneyFormatter } = useMoney();
 
   const dataTableColumns = [
-    { title: translate('Number'), dataIndex: 'number' },
+    { title: translate('bill_number'), dataIndex: 'number' },
     {
       title: translate('supplier'),
       dataIndex: 'supplierName',

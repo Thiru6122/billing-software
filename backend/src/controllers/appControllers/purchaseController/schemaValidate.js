@@ -21,6 +21,7 @@ const schema = Joi.object({
         hsnCode: Joi.string().allow('').optional(),
         gstRate: Joi.alternatives().try(Joi.number(), Joi.string()).optional(),
         description: Joi.string().allow(''),
+        unit: Joi.string().allow('').optional(),
         quantity: Joi.number().required(),
         price: Joi.number().required(),
         total: Joi.number().required(),

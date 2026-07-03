@@ -27,11 +27,40 @@ import useMail from '@/hooks/useMail';
 import { useNavigate } from 'react-router-dom';
 import { splitGstInclusive } from '@/constants/indianStates';
 
-const Item = ({ item, currentErp }) => {
+const Item = ({ item, currentErp, isPurchase = false }) => {
   const { moneyFormatter } = useMoney();
   const lineInclusive = Number(item.total) || 0;
   const gstRate = Number(item.gstRate) || 0;
   const { taxable: lineTaxable, gst: lineGst } = splitGstInclusive(lineInclusive, gstRate);
+
+  if (isPurchase) {
+    return (
+      <Row gutter={[12, 0]} key={item._id}>
+        <Col className="gutter-row" span={8}>
+          <p style={{ marginBottom: 5 }}>
+            <strong>{item.itemName}</strong>
+          </p>
+        </Col>
+        <Col className="gutter-row" span={3}>
+          <p>{item.unit || '—'}</p>
+        </Col>
+        <Col className="gutter-row" span={4}>
+          <p style={{ textAlign: 'right' }}>{item.quantity}</p>
+        </Col>
+        <Col className="gutter-row" span={4}>
+          <p style={{ textAlign: 'right' }}>
+            {moneyFormatter({ amount: item.price, currency_code: currentErp.currency })}
+          </p>
+        </Col>
+        <Col className="gutter-row" span={4}>
+          <p style={{ textAlign: 'right', fontWeight: '700' }}>
+            {moneyFormatter({ amount: lineInclusive, currency_code: currentErp.currency })}
+          </p>
+        </Col>
+        <Divider dashed style={{ marginTop: 0, marginBottom: 15 }} />
+      </Row>
+    );
+  }
 
   return (
     <Row gutter={[12, 0]} key={item._id}>
@@ -290,35 +319,57 @@ export default function ReadItem({ config, selectedItem }) {
       </Descriptions>
       <Divider />
       <Row gutter={[12, 0]}>
-        <Col className="gutter-row" span={7}>
-          <p>
-            <strong>{translate('Product')}</strong>
-          </p>
-        </Col>
-        <Col className="gutter-row" span={3}>
-          <p style={{ textAlign: 'right' }}>
-            <strong>Price (excl.)</strong>
-          </p>
-        </Col>
-        <Col className="gutter-row" span={3}>
-          <p style={{ textAlign: 'right' }}>
-            <strong>GST</strong>
-          </p>
-        </Col>
-        <Col className="gutter-row" span={3}>
-          <p style={{ textAlign: 'right' }}>
-            <strong>{translate('Quantity')}</strong>
-          </p>
-        </Col>
-        <Col className="gutter-row" span={4}>
-          <p style={{ textAlign: 'right' }}>
-            <strong>{translate('Total')}</strong>
-          </p>
-        </Col>
+        {entity === 'purchase' ? (
+          <>
+            <Col className="gutter-row" span={8}>
+              <p><strong>{translate('raw_material')}</strong></p>
+            </Col>
+            <Col className="gutter-row" span={3}>
+              <p><strong>{translate('unit')}</strong></p>
+            </Col>
+            <Col className="gutter-row" span={4}>
+              <p style={{ textAlign: 'right' }}><strong>{translate('Quantity')}</strong></p>
+            </Col>
+            <Col className="gutter-row" span={4}>
+              <p style={{ textAlign: 'right' }}><strong>{translate('rate_per_unit')}</strong></p>
+            </Col>
+            <Col className="gutter-row" span={4}>
+              <p style={{ textAlign: 'right' }}><strong>{translate('amount')}</strong></p>
+            </Col>
+          </>
+        ) : (
+          <>
+            <Col className="gutter-row" span={7}>
+              <p>
+                <strong>{translate('Product')}</strong>
+              </p>
+            </Col>
+            <Col className="gutter-row" span={3}>
+              <p style={{ textAlign: 'right' }}>
+                <strong>Price (excl.)</strong>
+              </p>
+            </Col>
+            <Col className="gutter-row" span={3}>
+              <p style={{ textAlign: 'right' }}>
+                <strong>GST</strong>
+              </p>
+            </Col>
+            <Col className="gutter-row" span={3}>
+              <p style={{ textAlign: 'right' }}>
+                <strong>{translate('Quantity')}</strong>
+              </p>
+            </Col>
+            <Col className="gutter-row" span={4}>
+              <p style={{ textAlign: 'right' }}>
+                <strong>{translate('Total')}</strong>
+              </p>
+            </Col>
+          </>
+        )}
         <Divider />
       </Row>
       {itemslist.map((item) => (
-        <Item key={item._id} item={item} currentErp={currentErp}></Item>
+        <Item key={item._id} item={item} currentErp={currentErp} isPurchase={entity === 'purchase'} />
       ))}
       <div
         style={{
@@ -329,6 +380,19 @@ export default function ReadItem({ config, selectedItem }) {
         }}
       >
         <Row gutter={[12, -5]}>
+          {entity === 'purchase' ? (
+            <>
+              <Col className="gutter-row" span={12}>
+                <p>{translate('Total')} :</p>
+              </Col>
+              <Col className="gutter-row" span={12}>
+                <p>
+                  {moneyFormatter({ amount: currentErp.total, currency_code: currentErp.currency })}
+                </p>
+              </Col>
+            </>
+          ) : (
+            <>
           <Col className="gutter-row" span={12}>
             <p>Product value (excl. GST) :</p>
           </Col>
@@ -397,6 +461,8 @@ export default function ReadItem({ config, selectedItem }) {
               {moneyFormatter({ amount: currentErp.total, currency_code: currentErp.currency })}
             </p>
           </Col>
+            </>
+          )}
         </Row>
       </div>
       </div>

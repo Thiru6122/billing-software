@@ -99,18 +99,33 @@ html
         font-weight: 600;
         white-space: nowrap;
       }
-      .e-invoice-bar {
+      .bank-qr-row {
         display: table;
         width: 100%;
-        border-bottom: 1px solid #111;
-        font-size: 10px;
       }
-      .e-invoice-bar > div {
+      .bank-qr-row .bank-details {
         display: table-cell;
-        padding: 4px 8px;
-        border-right: 1px solid #111;
+        vertical-align: top;
+        width: 65%;
+        padding-right: 8px;
       }
-      .e-invoice-bar > div:last-child { border-right: none; }
+      .bank-qr-row .e-invoice-qr {
+        display: table-cell;
+        vertical-align: middle;
+        width: 35%;
+        text-align: center;
+        padding-left: 4px;
+      }
+      .bank-qr-row .e-invoice-qr img {
+        width: 72px;
+        height: 72px;
+        display: block;
+        margin: 0 auto 2px;
+      }
+      .bank-qr-row .e-invoice-qr .qr-label {
+        font-size: 8px;
+        font-weight: 600;
+      }
       .items-table {
         width: 100%;
         border-collapse: collapse;
@@ -328,11 +343,6 @@ html
               td.label Address
               td= customer.address || '-'
 
-      .e-invoice-bar
-        div IRN: -
-        div Ack No.: -
-        div Ack Date: -
-
       table.items-table
         thead
           tr
@@ -432,33 +442,42 @@ html
               li Subject to jurisdiction.
         .col
           .col-title Bank Details
-          table.bank-table
-            if settings.company_bank_account_number
-              tr
-                td.label Account Number
-                td= settings.company_bank_account_number
-            if settings.company_bank_name
-              tr
-                td.label Bank Name
-                td= settings.company_bank_name
-            if settings.company_bank_ifsc
-              tr
-                td.label IFSC
-                td= settings.company_bank_ifsc
-            if settings.company_bank_branch
-              tr
-                td.label Branch
-                td= settings.company_bank_branch
-            if settings.company_bank_account_name
-              tr
-                td.label Name
-                td= settings.company_bank_account_name
-            if !settings.company_bank_account_number && !settings.company_bank_name && settings.company_bank_account
-              tr
-                td(colspan='2')= settings.company_bank_account
-            if !settings.company_bank_account_number && !settings.company_bank_name && !settings.company_bank_account
-              tr
-                td(colspan='2').dash Add bank details in Company Settings
+          .bank-qr-row
+            .bank-details
+              table.bank-table
+                if settings.company_bank_account_number
+                  tr
+                    td.label Account Number
+                    td= settings.company_bank_account_number
+                if settings.company_bank_name
+                  tr
+                    td.label Bank Name
+                    td= settings.company_bank_name
+                if settings.company_bank_ifsc
+                  tr
+                    td.label IFSC
+                    td= settings.company_bank_ifsc
+                if settings.company_bank_branch
+                  tr
+                    td.label Branch
+                    td= settings.company_bank_branch
+                if settings.company_bank_account_name
+                  tr
+                    td.label Name
+                    td= settings.company_bank_account_name
+                tr
+                  td.label GPay / UPI
+                  td 9710660508
+                if !settings.company_bank_account_number && !settings.company_bank_name && settings.company_bank_account
+                  tr
+                    td(colspan='2')= settings.company_bank_account
+                if !settings.company_bank_account_number && !settings.company_bank_name && !settings.company_bank_account
+                  tr
+                    td(colspan='2').dash Add bank details in Company Settings
+            .e-invoice-qr
+              if eInvoiceQrDataUrl
+                img(src=eInvoiceQrDataUrl alt='E-Invoice QR')
+              .qr-label E-Invoice QR
         .col
           .signature-box
             div For #{settings.company_name || 'Company Name'}

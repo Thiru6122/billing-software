@@ -10,6 +10,7 @@ const { splitGstInclusive } = require('@/utils/indianGst');
 const { amountInWords } = require('@/utils/amountInWords');
 const { formatPlaceOfSupply } = require('@/utils/indianStates');
 const { formatIndianAmount } = require('@/utils/formatIndianAmount');
+const { generateEInvoiceQrDataUrl } = require('@/utils/eInvoiceQr');
 
 const pugFiles = ['invoice', 'offer', 'quote', 'payment', 'purchase'];
 const GST_PDF_TYPES = ['invoice', 'purchase'];
@@ -214,6 +215,12 @@ async function buildDocumentHtml(modelName, result) {
     });
 
   const templatePath = path.join('src/pdf', normalized + '.pug');
+
+  let eInvoiceQrDataUrl = null;
+  if (normalized === 'invoice') {
+    eInvoiceQrDataUrl = await generateEInvoiceQrDataUrl(model, settings, customer);
+  }
+
   return pug.renderFile(templatePath, {
     model,
     customer,
@@ -227,6 +234,7 @@ async function buildDocumentHtml(modelName, result) {
     amountInWords,
     formatPlaceOfSupply,
     moment,
+    eInvoiceQrDataUrl,
   });
 }
 

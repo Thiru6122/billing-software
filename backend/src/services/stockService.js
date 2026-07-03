@@ -114,9 +114,24 @@ async function addPurchaseStock(purchase, storeId, adminId) {
   const items = purchase.items || [];
 
   for (const item of items) {
-    if (!item.product) continue;
+    let productId = item.product;
+    if (!productId && item.itemName) {
+      const byName = await Product.findOne({
+        store: storeId,
+        removed: false,
+        name: {
+          $regex: new RegExp(
+            `^${String(item.itemName).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+            'i'
+          ),
+        },
+      });
+      if (byName) productId = byName._id;
+    }
+    if (!productId) continue;
+
     const product = await adjustProductStock({
-      productId: item.product,
+      productId,
       storeId,
       delta: item.quantity,
       movementType: 'purchase',
@@ -138,12 +153,27 @@ async function addPurchaseStock(purchase, storeId, adminId) {
 
 async function reversePurchaseStock(purchase, storeId, adminId) {
   if (!purchase.stockAdded) return;
+  const Product = mongoose.model('Product');
   const items = purchase.items || [];
 
   for (const item of items) {
-    if (!item.product) continue;
+    let productId = item.product;
+    if (!productId && item.itemName) {
+      const byName = await Product.findOne({
+        store: storeId,
+        removed: false,
+        name: {
+          $regex: new RegExp(
+            `^${String(item.itemName).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+            'i'
+          ),
+        },
+      });
+      if (byName) productId = byName._id;
+    }
+    if (!productId) continue;
     await adjustProductStock({
-      productId: item.product,
+      productId,
       storeId,
       delta: -item.quantity,
       movementType: 'out',
