@@ -30,14 +30,31 @@ const quoteSchema = new mongoose.Schema({
   client: {
     type: mongoose.Schema.ObjectId,
     ref: 'Client',
-    required: true,
     autopopulate: true,
+  },
+  customerName: {
+    type: String,
+    trim: true,
+  },
+  customerGstin: {
+    type: String,
+    trim: true,
+    uppercase: true,
+  },
+  placeOfSupply: {
+    type: String,
+    trim: true,
   },
   items: [
     {
+      product: { type: mongoose.Schema.ObjectId, ref: 'Product' },
       itemName: {
         type: String,
         required: true,
+      },
+      hsnCode: {
+        type: String,
+        trim: true,
       },
       description: {
         type: String,

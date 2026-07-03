@@ -34,8 +34,9 @@ module.exports = printDocument = async (req, res, { directory, id }) => {
     }
 
     const html = await buildDocumentHtml(modelName, result);
+    const paper = req.query.paper || req.query.format || 'A4';
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.send(wrapHtmlForPrint(html));
+    return res.send(wrapHtmlForPrint(html, paper));
   } catch (error) {
     if (error.name === 'BSONTypeError') {
       return res.status(400).json({

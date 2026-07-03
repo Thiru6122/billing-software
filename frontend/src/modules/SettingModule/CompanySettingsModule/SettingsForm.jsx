@@ -20,11 +20,11 @@ const formItems = [
 ];
 
 const bankItems = [
-  { settingKey: 'company_bank_account_name', valueType: 'string', label: 'Bank account name' },
-  { settingKey: 'company_bank_account_number', valueType: 'string', label: 'Account number' },
+  { settingKey: 'company_bank_account_name', valueType: 'string', label: 'Account holder name' },
   { settingKey: 'company_bank_name', valueType: 'string', label: 'Bank name' },
+  { settingKey: 'company_bank_branch', valueType: 'string', label: 'Bank branch' },
+  { settingKey: 'company_bank_account_number', valueType: 'string', label: 'Account number' },
   { settingKey: 'company_bank_ifsc', valueType: 'string', label: 'IFSC code' },
-  { settingKey: 'company_bank_branch', valueType: 'string', label: 'Branch' },
 ];
 
 function SettingField({ item, translate }) {

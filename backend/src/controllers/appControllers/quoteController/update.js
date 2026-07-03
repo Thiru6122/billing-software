@@ -30,10 +30,33 @@ const update = async (req, res) => {
     //item total
     item['total'] = total;
   });
-  taxTotal = calculate.multiply(subTotal, taxRate / 100);
-  total = calculate.add(subTotal, taxTotal);
+  taxTotal = 0;
+  total = calculate.sub(subTotal, discount);
 
   let body = req.body;
+
+  if (body.client && typeof body.client === 'object') {
+    body.client = body.client._id || body.client.id;
+  }
+  if (!body.client || body.client === '') {
+    delete body.client;
+  }
+  if (body.customerName) {
+    body.customerName = String(body.customerName).trim();
+    if (!body.customerName) delete body.customerName;
+  }
+  if (body.notes == null) body.notes = '';
+  if (Array.isArray(body.items)) {
+    body.items = body.items.map((item) => {
+      if (!item) return item;
+      const row = { ...item };
+      if (row.product && typeof row.product === 'object') {
+        row.product = row.product._id || row.product.id;
+      }
+      if (row.description == null) row.description = '';
+      return row;
+    });
+  }
 
   body['subTotal'] = subTotal;
   body['taxTotal'] = taxTotal;

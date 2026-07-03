@@ -23,6 +23,7 @@ import {
 } from '@ant-design/icons';
 
 import { useNavigate } from 'react-router-dom';
+import { sanitizeErpFormData } from '@/utils/sanitizeErpFormData';
 
 function SaveForm({ form }) {
   const translate = useLanguage();
@@ -121,7 +122,7 @@ export default function CreateItem({ config, CreateForm }) {
         return;
       }
     }
-    dispatch(erp.create({ entity, jsonData: fieldsValue }));
+    dispatch(erp.create({ entity, jsonData: sanitizeErpFormData(fieldsValue) }));
   };
 
   return (

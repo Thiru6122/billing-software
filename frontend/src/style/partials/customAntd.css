@@ -77,6 +77,53 @@ h6 {
 .ant-menu-item {
   height: 36px !important;
 }
+
+/* Dropdown / select list — clearer hover and keyboard focus */
+.ant-select-dropdown .ant-select-item {
+  font-size: 14px;
+  min-height: 36px;
+  line-height: 36px;
+}
+
+.ant-select-dropdown .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background-color: #91caff !important;
+  color: #111 !important;
+  font-weight: 600;
+}
+
+.ant-select-dropdown .ant-select-item-option:hover:not(.ant-select-item-option-disabled) {
+  background-color: #bae0ff !important;
+  color: #111 !important;
+}
+
+.ant-select-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background-color: #69b1ff !important;
+  color: #111 !important;
+  font-weight: 600;
+}
+
+.ant-dropdown-menu-item:hover,
+.ant-dropdown-menu-item-active {
+  background-color: #91caff !important;
+  color: #111 !important;
+  font-weight: 600;
+}
+
+.ant-dropdown-menu-item-selected {
+  background-color: #69b1ff !important;
+  color: #111 !important;
+  font-weight: 600;
+}
+
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner {
+  background: #1677ff;
+}
+
+.ant-picker-dropdown .ant-picker-cell-in-view:hover .ant-picker-cell-inner {
+  background: #bae0ff;
+}
 @media (max-width: 768px) {
   .tabContent .ant-tabs-right > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane {
     padding-right: 0;

@@ -65,6 +65,39 @@ function getInvoiceCustomer(model) {
   };
 }
 
+function getQuoteCustomer(model) {
+  if (model.customerName) {
+    return {
+      name: model.customerName,
+      gstin: model.customerGstin || '',
+      phone: '',
+      email: '',
+      address: '',
+      state: model.placeOfSupply || '',
+    };
+  }
+
+  if (model.client) {
+    return {
+      name: model.client.name || '',
+      gstin: model.customerGstin || model.client.gstin || '',
+      phone: model.client.phone || '',
+      email: model.client.email || '',
+      address: model.client.address || '',
+      state: model.client.state || model.placeOfSupply || '',
+    };
+  }
+
+  return {
+    name: 'Walk-in Customer',
+    gstin: model.customerGstin || '',
+    phone: '',
+    email: '',
+    address: '',
+    state: model.placeOfSupply || '',
+  };
+}
+
 function getPurchaseSupplier(model) {
   if (model.supplierName) {
     return {
@@ -159,7 +192,12 @@ async function renderHtmlToPdf(htmlContent, { targetLocation, format = 'A4' }) {
       path: targetLocation,
       format,
       printBackground: true,
-      margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
+      margin: {
+        top: format === 'A5' ? '3mm' : '5mm',
+        right: format === 'A5' ? '3mm' : '5mm',
+        bottom: format === 'A5' ? '3mm' : '5mm',
+        left: format === 'A5' ? '3mm' : '5mm',
+      },
     });
   } finally {
     await browser.close();
@@ -204,7 +242,12 @@ async function buildDocumentHtml(modelName, result) {
     : result?.toObject
       ? result.toObject()
       : result;
-  const customer = normalized === 'invoice' ? getInvoiceCustomer(model) : null;
+  const customer =
+    normalized === 'invoice'
+      ? getInvoiceCustomer(model)
+      : normalized === 'quote'
+        ? getQuoteCustomer(model)
+        : null;
   const supplier = normalized === 'purchase' ? getPurchaseSupplier(model) : null;
   const taxSummary = GST_PDF_TYPES.includes(normalized) ? buildTaxSummary(model) : [];
 
@@ -238,33 +281,48 @@ async function buildDocumentHtml(modelName, result) {
   });
 }
 
-function wrapHtmlForPrint(html) {
+function normalizePaperFormat(format) {
+  return String(format || 'A4').toUpperCase() === 'A5' ? 'A5' : 'A4';
+}
+
+function wrapHtmlForPrint(html, format = 'A4') {
+  const paper = normalizePaperFormat(format);
+  const paperClass = paper === 'A5' ? 'paper-a5' : 'paper-a4';
+  const margin = paper === 'A5' ? '3mm' : '5mm';
+
   const printStyle = `
     <style>
-      @page { size: A4 portrait; margin: 8mm; }
-      html, body {
-        width: 100%;
-        max-width: 100%;
-        margin: 0;
-        padding: 0;
-      }
+      @page { size: ${paper} portrait; margin: ${margin}; }
       @media print {
         html, body {
           width: 100% !important;
           max-width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
         }
-        header, main, .table-invoice, footer {
-          max-width: 100% !important;
+        .invoice-box {
+          width: 100% !important;
+          page-break-inside: avoid;
         }
-        .sheet {
-          height: auto !important;
+        .footer-grid .col {
+          min-height: 0 !important;
+        }
+        .items-table tr {
+          page-break-inside: avoid;
         }
       }
     </style>
   `;
+
   let output = html.includes('</head>') ? html.replace('</head>', `${printStyle}</head>`) : printStyle + html;
+  output = output.replace(/<html([^>]*)>/i, (match, attrs) => {
+    if (/class=/i.test(attrs)) {
+      return match.replace(/class=(['"])([^'"]*)\1/i, `class="${paperClass}"`);
+    }
+    return `<html class="${paperClass}"${attrs}>`;
+  });
   output = output.replace(
     /<body(\s[^>]*)?>/i,
     '<body$1 onload="setTimeout(function(){ window.print(); }, 400);" onafterprint="window.close();">'

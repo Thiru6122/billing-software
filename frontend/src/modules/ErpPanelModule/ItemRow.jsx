@@ -14,6 +14,7 @@ export default function ItemRow({
   scanOnly = false,
   priceEditable = false,
   showHsn = false,
+  hideGst = false,
 }) {
   const translate = useLanguage();
   const form = Form.useFormInstance();
@@ -109,7 +110,7 @@ export default function ItemRow({
             <InputNumber style={{ width: '100%' }} min={1} onChange={handleQuantityChange} />
           </Form.Item>
         </Col>
-        <Col className="gutter-row" xs={16} sm={8} md={4}>
+        <Col className="gutter-row" xs={16} sm={8} md={hideGst ? 5 : 4}>
           <Form.Item name={[field.name, 'price']} rules={[{ required: true }]}>
             <InputNumber
               {...(priceReadOnly ? moneyInputProps : editablePriceInputProps)}
@@ -121,12 +122,14 @@ export default function ItemRow({
             />
           </Form.Item>
         </Col>
+        {!hideGst && (
         <Col className="gutter-row" xs={12} sm={6} md={3}>
           <Form.Item label={false}>
             <InputNumber {...moneyInputProps} value={lineGst} />
           </Form.Item>
         </Col>
-        <Col className="gutter-row" xs={12} sm={6} md={4}>
+        )}
+        <Col className="gutter-row" xs={12} sm={6} md={hideGst ? 5 : 4}>
           <Form.Item label={false}>
             <InputNumber {...moneyInputProps} value={lineInclusive} />
           </Form.Item>

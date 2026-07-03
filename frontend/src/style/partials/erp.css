@@ -9,10 +9,28 @@
 .invoice-items-header p {
   margin: 0 0 4px;
   font-weight: 500;
+  font-size: 15px;
 }
 
 .invoice-item-row {
   padding-right: 28px;
+  font-size: 15px;
+}
+
+.invoice-item-row .ant-input,
+.invoice-item-row .ant-input-number-input,
+.invoice-item-row .ant-select-selector {
+  font-size: 15px !important;
+}
+
+#invoice-print-area {
+  font-size: 15px;
+}
+
+#invoice-print-area p,
+#invoice-print-area .ant-descriptions-item-label,
+#invoice-print-area .ant-descriptions-item-content {
+  font-size: 15px;
 }
 
 .invoice-item-row__delete {

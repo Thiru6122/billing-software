@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Divider } from 'antd';
 
-import { Button, Row, Col, Descriptions, Statistic, Tag } from 'antd';
+import { Button, Row, Col, Descriptions, Statistic, Tag, Dropdown } from 'antd';
 import { PageHeader } from '@ant-design/pro-layout';
 import {
   EditOutlined,
@@ -27,7 +27,7 @@ import useMail from '@/hooks/useMail';
 import { useNavigate } from 'react-router-dom';
 import { splitGstInclusive } from '@/constants/indianStates';
 
-const Item = ({ item, currentErp, isPurchase = false }) => {
+const Item = ({ item, currentErp, isPurchase = false, isQuote = false }) => {
   const { moneyFormatter } = useMoney();
   const lineInclusive = Number(item.total) || 0;
   const gstRate = Number(item.gstRate) || 0;
@@ -51,6 +51,34 @@ const Item = ({ item, currentErp, isPurchase = false }) => {
           <p style={{ textAlign: 'right' }}>
             {moneyFormatter({ amount: item.price, currency_code: currentErp.currency })}
           </p>
+        </Col>
+        <Col className="gutter-row" span={4}>
+          <p style={{ textAlign: 'right', fontWeight: '700' }}>
+            {moneyFormatter({ amount: lineInclusive, currency_code: currentErp.currency })}
+          </p>
+        </Col>
+        <Divider dashed style={{ marginTop: 0, marginBottom: 15 }} />
+      </Row>
+    );
+  }
+
+  if (isQuote) {
+    return (
+      <Row gutter={[12, 0]} key={item._id}>
+        <Col className="gutter-row" span={7}>
+          <p style={{ marginBottom: 5 }}>
+            <strong>{item.itemName}</strong>
+          </p>
+          <p>{item.description}</p>
+          {item.hsnCode && <p style={{ color: '#666' }}>HSN: {item.hsnCode}</p>}
+        </Col>
+        <Col className="gutter-row" span={3}>
+          <p style={{ textAlign: 'right' }}>
+            {moneyFormatter({ amount: item.price, currency_code: currentErp.currency })}
+          </p>
+        </Col>
+        <Col className="gutter-row" span={3}>
+          <p style={{ textAlign: 'right' }}>{item.quantity}</p>
         </Col>
         <Col className="gutter-row" span={4}>
           <p style={{ textAlign: 'right', fontWeight: '700' }}>
@@ -151,6 +179,8 @@ export default function ReadItem({ config, selectedItem }) {
     }
   }, [currentErp]);
 
+  const canPrintOrDownload = ['invoice', 'purchase', 'quote'].includes(entity);
+
   return (
     <>
       <PageHeader
@@ -178,27 +208,30 @@ export default function ReadItem({ config, selectedItem }) {
           >
             {translate('Close')}
           </Button>,
-          entity === 'invoice' && (
-            <Button
+          canPrintOrDownload && (
+            <Dropdown
               key={`${uniqueId()}`}
-              className="no-print"
-              onClick={() => openDocumentPrint(entity, currentErp._id)}
-              icon={<PrinterOutlined />}
+              menu={{
+                items: [
+                  {
+                    key: 'a4',
+                    label: translate('print_a4'),
+                    onClick: () => openDocumentPrint(entity, currentErp._id, 'A4'),
+                  },
+                  {
+                    key: 'a5',
+                    label: translate('print_a5'),
+                    onClick: () => openDocumentPrint(entity, currentErp._id, 'A5'),
+                  },
+                ],
+              }}
             >
-              {translate('Print')}
-            </Button>
+              <Button className="no-print" icon={<PrinterOutlined />}>
+                {translate('Print')}
+              </Button>
+            </Dropdown>
           ),
-          entity === 'purchase' && (
-            <Button
-              key={`${uniqueId()}`}
-              className="no-print"
-              onClick={() => openDocumentPrint(entity, currentErp._id)}
-              icon={<PrinterOutlined />}
-            >
-              {translate('Print')}
-            </Button>
-          ),
-          (entity === 'invoice' || entity === 'purchase') && (
+          canPrintOrDownload && (
             <Button
               key={`${uniqueId()}`}
               className="no-print"
@@ -287,7 +320,7 @@ export default function ReadItem({ config, selectedItem }) {
             })}
             style={{
               margin: '0 32px',
-              display: entity === 'purchase' ? 'none' : undefined,
+              display: entity === 'purchase' || entity === 'quote' ? 'none' : undefined,
             }}
           />
         </Row>
@@ -301,6 +334,9 @@ export default function ReadItem({ config, selectedItem }) {
             : `${translate('Client')} : ${currentErp.customerName || currentErp.client?.name || translate('walk_in_customer')}`
         }
       >
+        {(entity === 'invoice' || entity === 'quote') && currentErp.placeOfSupply && (
+          <Descriptions.Item label="Place of supply">{currentErp.placeOfSupply}</Descriptions.Item>
+        )}
         {entity === 'purchase' && currentErp.supplier ? (
           <>
             <Descriptions.Item label={translate('Address')}>{currentErp.supplier.address}</Descriptions.Item>
@@ -337,6 +373,21 @@ export default function ReadItem({ config, selectedItem }) {
               <p style={{ textAlign: 'right' }}><strong>{translate('amount')}</strong></p>
             </Col>
           </>
+        ) : entity === 'quote' ? (
+          <>
+            <Col className="gutter-row" span={7}>
+              <p><strong>{translate('Product')}</strong></p>
+            </Col>
+            <Col className="gutter-row" span={3}>
+              <p style={{ textAlign: 'right' }}><strong>{translate('Price')}</strong></p>
+            </Col>
+            <Col className="gutter-row" span={3}>
+              <p style={{ textAlign: 'right' }}><strong>{translate('Quantity')}</strong></p>
+            </Col>
+            <Col className="gutter-row" span={4}>
+              <p style={{ textAlign: 'right' }}><strong>{translate('Total')}</strong></p>
+            </Col>
+          </>
         ) : (
           <>
             <Col className="gutter-row" span={7}>
@@ -369,7 +420,13 @@ export default function ReadItem({ config, selectedItem }) {
         <Divider />
       </Row>
       {itemslist.map((item) => (
-        <Item key={item._id} item={item} currentErp={currentErp} isPurchase={entity === 'purchase'} />
+        <Item
+          key={item._id}
+          item={item}
+          currentErp={currentErp}
+          isPurchase={entity === 'purchase'}
+          isQuote={entity === 'quote'}
+        />
       ))}
       <div
         style={{
@@ -382,6 +439,25 @@ export default function ReadItem({ config, selectedItem }) {
         <Row gutter={[12, -5]}>
           {entity === 'purchase' ? (
             <>
+              <Col className="gutter-row" span={12}>
+                <p>{translate('Total')} :</p>
+              </Col>
+              <Col className="gutter-row" span={12}>
+                <p>
+                  {moneyFormatter({ amount: currentErp.total, currency_code: currentErp.currency })}
+                </p>
+              </Col>
+            </>
+          ) : entity === 'quote' ? (
+            <>
+              <Col className="gutter-row" span={12}>
+                <p>{translate('Sub Total')} :</p>
+              </Col>
+              <Col className="gutter-row" span={12}>
+                <p>
+                  {moneyFormatter({ amount: currentErp.subTotal, currency_code: currentErp.currency })}
+                </p>
+              </Col>
               <Col className="gutter-row" span={12}>
                 <p>{translate('Total')} :</p>
               </Col>
