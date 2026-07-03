@@ -7,7 +7,14 @@ import calculate from '@/utils/calculate';
 import useLanguage from '@/locale/useLanguage';
 import { splitGstInclusive } from '@/constants/indianStates';
 
-export default function ItemRow({ field, remove, current = null, scanOnly = false, showHsn = false }) {
+export default function ItemRow({
+  field,
+  remove,
+  current = null,
+  scanOnly = false,
+  priceEditable = false,
+  showHsn = false,
+}) {
   const translate = useLanguage();
   const form = Form.useFormInstance();
   const money = useMoney();
@@ -41,6 +48,8 @@ export default function ItemRow({ field, remove, current = null, scanOnly = fals
     form.setFieldValue(['items', field.name, 'total'], calculate.multiply(p, q));
   };
 
+  const priceReadOnly = scanOnly && !priceEditable;
+
   const moneyInputProps = {
     readOnly: true,
     className: 'moneyInput',
@@ -54,6 +63,15 @@ export default function ItemRow({ field, remove, current = null, scanOnly = fals
         amount: value ?? 0,
         currency_code: money.currency_code,
       }),
+  };
+
+  const editablePriceInputProps = {
+    className: 'moneyInput',
+    min: 0,
+    controls: false,
+    style: { width: '100%' },
+    addonAfter: money.currency_position === 'after' ? money.currency_symbol : undefined,
+    addonBefore: money.currency_position === 'before' ? money.currency_symbol : undefined,
   };
 
   if (showHsn) {
@@ -94,8 +112,8 @@ export default function ItemRow({ field, remove, current = null, scanOnly = fals
         <Col className="gutter-row" xs={16} sm={8} md={4}>
           <Form.Item name={[field.name, 'price']} rules={[{ required: true }]}>
             <InputNumber
-              {...moneyInputProps}
-              readOnly={scanOnly}
+              {...(priceReadOnly ? moneyInputProps : editablePriceInputProps)}
+              readOnly={priceReadOnly}
               onChange={(value) => {
                 const q = form.getFieldValue(['items', field.name, 'quantity']) || 1;
                 form.setFieldValue(['items', field.name, 'total'], calculate.multiply(value || 0, q));
@@ -223,9 +241,13 @@ export default function ItemRow({ field, remove, current = null, scanOnly = fals
           className="moneyInput"
           min={0}
           controls={false}
-          readOnly={scanOnly}
+          readOnly={priceReadOnly}
           addonAfter={money.currency_position === 'after' ? money.currency_symbol : undefined}
           addonBefore={money.currency_position === 'before' ? money.currency_symbol : undefined}
+          onChange={(value) => {
+            const q = form.getFieldValue(['items', field.name, 'quantity']) || 1;
+            form.setFieldValue(['items', field.name, 'total'], calculate.multiply(value || 0, q));
+          }}
         />
       </Form.Item>
 

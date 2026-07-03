@@ -17,6 +17,7 @@ import { CloseCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { settingsAction } from '@/redux/settings/actions';
+import { normalizeErpFormValues, sanitizeErpFormData } from '@/utils/sanitizeErpFormData';
 // import { StatusTag } from '@/components/Tag';
 
 function SaveForm({ form, translate }) {
@@ -123,7 +124,7 @@ export default function UpdateItem({ config, UpdateForm }) {
       }
     }
 
-    dispatch(erp.update({ entity, id, jsonData: dataToUpdate }));
+    dispatch(erp.update({ entity, id, jsonData: sanitizeErpFormData(dataToUpdate) }));
   };
   useEffect(() => {
     if (isSuccess) {
@@ -137,7 +138,7 @@ export default function UpdateItem({ config, UpdateForm }) {
   useEffect(() => {
     if (current) {
       setCurrentErp(current);
-      let formData = { ...current };
+      let formData = normalizeErpFormValues({ ...current });
       if (formData.date) {
         formData.date = dayjs(formData.date);
       }

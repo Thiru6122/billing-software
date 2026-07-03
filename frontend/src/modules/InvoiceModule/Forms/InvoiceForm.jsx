@@ -209,6 +209,9 @@ function LoadInvoiceForm({ current = null }) {
           </Form.Item>
         </Col>
       </Row>
+      <div style={{ marginBottom: 8, color: '#666', fontSize: 12 }}>
+        {translate('invoice_price_edit_hint')}
+      </div>
       <Divider dashed />
       <Row gutter={[12, 12]} style={{ position: 'relative' }} className="invoice-items-header">
         <Col className="gutter-row" xs={24} sm={12} md={6}>
@@ -244,6 +247,7 @@ function LoadInvoiceForm({ current = null }) {
                 field={field}
                 current={current}
                 scanOnly={true}
+                priceEditable={true}
                 showHsn={true}
               />
             ))}

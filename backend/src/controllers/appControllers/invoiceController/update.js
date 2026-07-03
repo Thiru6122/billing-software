@@ -7,6 +7,7 @@ const custom = require('@/controllers/pdfController');
 const { calculate } = require('@/helpers');
 const { loadSettings } = require('@/middlewares/settings');
 const schema = require('./schemaValidate');
+const { normalizeInvoiceBody } = require('./normalizeBody');
 const { calculateInvoiceTotals } = require('@/services/invoiceGstService');
 const {
   checkInvoiceStock,
@@ -17,9 +18,9 @@ const {
 } = require('@/services/stockService');
 
 const update = async (req, res) => {
-  let body = req.body;
+  let body = normalizeInvoiceBody(req.body);
 
-  const { error, value } = schema.validate(body);
+  const { error, value } = schema.validate(body, { stripUnknown: true });
   if (error) {
     const { details } = error;
     return res.status(400).json({

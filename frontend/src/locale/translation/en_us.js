@@ -534,6 +534,8 @@ const lang = {
   scan_barcode_placeholder: 'Click here and scan barcode…',
   product_not_found_for_barcode: 'No product found for this barcode',
   scan_at_least_one_product: 'Scan at least one product barcode before saving the invoice',
+  invoice_price_edit_hint:
+    'Unit price can be changed for this invoice only. The product price in Inventory is not updated.',
   add_product_to_invoice: 'Add products to invoice',
   add_product_invoice_hint:
     'Scan a product barcode or search by name, SKU or barcode. Select again to increase quantity for the same product.',

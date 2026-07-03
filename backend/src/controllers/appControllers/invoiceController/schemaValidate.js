@@ -8,18 +8,18 @@ const schema = Joi.object({
   number: Joi.number().required(),
   year: Joi.number().required(),
   status: Joi.string().required(),
-  notes: Joi.string().allow(''),
+  notes: Joi.string().allow('', null).optional(),
   expiredDate: Joi.date().required(),
   date: Joi.date().required(),
   items: Joi.array()
     .items(
       Joi.object({
         _id: Joi.string().allow('').optional(),
-        product: Joi.string().allow('').optional(),
+        product: Joi.alternatives().try(Joi.string(), Joi.object()).allow('', null).optional(),
         itemName: Joi.string().required(),
-        hsnCode: Joi.string().allow('').optional(),
+        hsnCode: Joi.string().allow('', null).optional(),
         gstRate: Joi.alternatives().try(Joi.number(), Joi.string()).optional(),
-        description: Joi.string().allow(''),
+        description: Joi.string().allow('', null).optional(),
         quantity: Joi.number().required(),
         price: Joi.number().required(),
         total: Joi.number().required(),
