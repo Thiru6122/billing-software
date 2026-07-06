@@ -34,7 +34,6 @@ function LoadInvoiceForm({ current = null }) {
   const translate = useLanguage();
   const form = Form.useFormInstance();
   const { dateFormat } = useDate();
-  const { last_invoice_number } = useSelector(selectFinanceSettings);
   const companySettings = useSelector(selectCompanySettings) || {};
   const companyState = companySettings.company_state || 'Tamil Nadu';
 
@@ -47,7 +46,25 @@ function LoadInvoiceForm({ current = null }) {
   const [igstTotal, setIgstTotal] = useState(0);
   const [gstType, setGstType] = useState('intra');
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
-  const [lastNumber, setLastNumber] = useState(() => last_invoice_number + 1);
+  const [lastNumber, setLastNumber] = useState(null);
+  const watchedYear = Form.useWatch('year', form);
+
+  const loadNextNumber = async (year) => {
+    const targetYear = year || currentYear;
+    const res = await request.get({ entity: `invoice/nextNumber?year=${targetYear}` });
+    if (res?.success && res.result?.number != null) {
+      setLastNumber(res.result.number);
+      if (!current) {
+        form.setFieldValue('number', res.result.number);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!current) {
+      loadNextNumber(watchedYear || currentYear);
+    }
+  }, [current, watchedYear]);
 
   const placeOfSupply = Form.useWatch('placeOfSupply', form);
   const clientId = Form.useWatch('client', form);
@@ -157,7 +174,12 @@ function LoadInvoiceForm({ current = null }) {
             initialValue={lastNumber}
             rules={[{ required: true }]}
           >
-            <InputNumber min={1} style={{ width: '100%' }} />
+            <InputNumber
+              min={1}
+              style={{ width: '100%' }}
+              readOnly={!current}
+              disabled={!current && lastNumber == null}
+            />
           </Form.Item>
         </Col>
         <Col className="gutter-row" span={3}>
@@ -167,7 +189,14 @@ function LoadInvoiceForm({ current = null }) {
             initialValue={currentYear}
             rules={[{ required: true }]}
           >
-            <InputNumber style={{ width: '100%' }} />
+            <InputNumber
+              style={{ width: '100%' }}
+              onChange={(year) => {
+                if (!current && year) {
+                  setCurrentYear(year);
+                }
+              }}
+            />
           </Form.Item>
         </Col>
 

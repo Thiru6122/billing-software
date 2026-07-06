@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Form, Select, Space, Typography } from 'antd';
+import { Alert, Button, Form, Select, Space, Typography, message } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { request } from '@/request';
 import useLanguage from '@/locale/useLanguage';
 import useDebounce from '@/hooks/useDebounce';
+
+function normalizeCategoryValue(category) {
+  if (category == null || category === '') return '';
+  if (typeof category === 'string') return category;
+  if (typeof category === 'object') {
+    return category.name || category.label || '';
+  }
+  return String(category);
+}
 
 export default function ProductHsnSuggest() {
   const translate = useLanguage();
@@ -24,32 +33,48 @@ export default function ProductHsnSuggest() {
   }, [productName]);
 
   const applySuggestion = (item) => {
-    if (!item?.hsnCode) return;
+    if (!item?.hsnCode) return false;
+
     form.setFieldValue('hsnCode', item.hsnCode);
-    form.setFieldValue('taxRate', Number(item.taxRate) || 0);
     setLastMatch(item);
     manualHsnRef.current = false;
+    return true;
   };
 
-  const lookupHsn = async (name, cat, { autoApply = false } = {}) => {
+  const lookupHsn = async (name, cat, { autoApply = false, forceApply = false } = {}) => {
     const query = String(name || '').trim();
-    if (!query) return;
+    if (!query) {
+      message.warning(translate('product_name_required') || 'Enter a product name first.');
+      return;
+    }
 
+    const categoryLabel = normalizeCategoryValue(cat);
     setLoading(true);
+
     try {
       const response = await request.get({
-        entity: `product/suggestHsn?name=${encodeURIComponent(query)}&category=${encodeURIComponent(cat || '')}`,
+        entity: `product/suggestHsn?name=${encodeURIComponent(query)}&category=${encodeURIComponent(categoryLabel)}`,
       });
 
-      if (!response?.success) return;
+      if (!response?.success) {
+        message.error(response?.message || 'HSN lookup failed.');
+        return;
+      }
 
       const { best, suggestions: list } = response.result || {};
       setSuggestions(list || []);
 
-      if (autoApply && best?.hsnCode && !manualHsnRef.current) {
-        applySuggestion(best);
-      } else if (best) {
+      if (best?.hsnCode) {
         setLastMatch(best);
+      }
+
+      const shouldApply =
+        best?.hsnCode && (forceApply || (autoApply && !manualHsnRef.current));
+
+      if (shouldApply && applySuggestion(best)) {
+        message.success(`HSN ${best.hsnCode} applied.`);
+      } else if (!best?.hsnCode) {
+        message.info('No HSN match found for this product name.');
       }
     } finally {
       setLoading(false);
@@ -71,7 +96,10 @@ export default function ProductHsnSuggest() {
     };
   }, [debouncedSearch, category]);
 
-  const handleManualLookup = () => lookupHsn(productName, category, { autoApply: true });
+  const handleManualLookup = () => {
+    manualHsnRef.current = false;
+    lookupHsn(productName, category, { autoApply: true, forceApply: true });
+  };
 
   return (
     <div style={{ marginBottom: 16 }}>
@@ -89,7 +117,10 @@ export default function ProductHsnSuggest() {
 
         {lastMatch?.hsnCode ? (
           <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            {`${translate('hsn_suggested')}: ${lastMatch.hsnCode} (${lastMatch.taxRate || 0}% GST) — ${lastMatch.description}`}
+            {`${translate('hsn_suggested')}: ${lastMatch.hsnCode} — ${lastMatch.description}`}
+            {lastMatch.taxRate != null && lastMatch.taxRate !== ''
+              ? ` (${translate('reference_gst')}: ${lastMatch.taxRate}%)`
+              : ''}
           </Typography.Text>
         ) : null}
 
@@ -102,7 +133,9 @@ export default function ProductHsnSuggest() {
             style={{ width: '100%' }}
             options={suggestions.map((item) => ({
               value: item.hsnCode,
-              label: `${item.hsnCode} — ${item.description} (${item.taxRate || 0}%)`,
+              label: item.taxRate != null && item.taxRate !== ''
+                ? `${item.hsnCode} — ${item.description} (ref. GST ${item.taxRate}%)`
+                : `${item.hsnCode} — ${item.description}`,
             }))}
             onChange={(value) => {
               const item = suggestions.find((row) => row.hsnCode === value);

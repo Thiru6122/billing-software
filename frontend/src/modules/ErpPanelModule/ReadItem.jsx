@@ -69,7 +69,7 @@ const Item = ({ item, currentErp, isPurchase = false, isQuote = false }) => {
           <p style={{ marginBottom: 5 }}>
             <strong>{item.itemName}</strong>
           </p>
-          <p>{item.description}</p>
+          <p>{item.description && !/^\s*SKU\s*:/i.test(item.description) ? item.description : ''}</p>
           {item.hsnCode && <p style={{ color: '#666' }}>HSN: {item.hsnCode}</p>}
         </Col>
         <Col className="gutter-row" span={3}>
@@ -96,7 +96,7 @@ const Item = ({ item, currentErp, isPurchase = false, isQuote = false }) => {
         <p style={{ marginBottom: 5 }}>
           <strong>{item.itemName}</strong>
         </p>
-        <p>{item.description}</p>
+        <p>{item.description && !/^\s*SKU\s*:/i.test(item.description) ? item.description : ''}</p>
         {item.hsnCode && <p style={{ color: '#666' }}>HSN: {item.hsnCode}</p>}
         {gstRate > 0 && <p style={{ color: '#666' }}>GST: {gstRate}%</p>}
       </Col>

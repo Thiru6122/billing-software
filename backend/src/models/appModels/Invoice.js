@@ -215,4 +215,10 @@ const invoiceSchema = new mongoose.Schema({
 });
 
 invoiceSchema.plugin(require('mongoose-autopopulate'));
+
+invoiceSchema.index(
+  { store: 1, year: 1, number: 1 },
+  { unique: true, partialFilterExpression: { removed: false } }
+);
+
 module.exports = mongoose.model('Invoice', invoiceSchema);

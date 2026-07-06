@@ -11,6 +11,7 @@ globalThis.window = dom.window;
 const {
   buildPrintDocument,
   buildRetailLabels,
+  buildProductLabels,
   getLabelLayout,
   generateBarcodeValue,
   LABEL_PRESETS,
@@ -79,10 +80,8 @@ function runScenario(name, labelCount, presetId = 'tvs_neo46') {
   assert('label-inner wrapper', countMatches(html, /class="label-inner"/g) === labelCount);
   assert('barcode SVG present', countMatches(html, /<svg/g) === labelCount);
   assert('PURE company name', html.includes('PURE'));
-  assert('enterprise line above brand', html.includes('class="enterprise-line"'));
-  assert('default enterprise name', html.includes('Ashwin'));
+  assert('no enterprise line on label', !html.includes('class="enterprise-line"'));
   assert('no enterprise line 2', !html.includes('>enterprise</div>'));
-  assert('one enterprise line per label', countMatches(html, /class="enterprise-line"/g) === labelCount);
   assert('product line', html.includes('CASTOR OIL 100ML'));
   assert('auto-close after print', html.includes('onafterprint="window.close();"'));
   assert('print setup notice (screen)', html.includes('print-setup-notice'));
@@ -99,17 +98,16 @@ function runScenario(name, labelCount, presetId = 'tvs_neo46') {
   assert('horizontal padding on label', html.includes('padding: 0 1.2mm'));
   assert('compact barcode height', html.includes('height: 4.5mm'));
   if (layout.layoutStyle === 'neo') {
-    assert('neo barcode number style', html.includes('font-size: 7.5pt'));
-    assert('neo footer line style', html.includes('font-size: 8pt'));
-    assert('neo mrp+product line style', html.includes('font-size: 7.5pt'));
+    assert('neo barcode number style', html.includes('font-size: 8pt'));
+    assert('neo info line style', html.includes('font-size: 6pt'));
     assert('bold dark product lines', html.includes('font-weight: 700'));
     assert('neo company name', html.includes('font-size: 9pt'));
     assert('neo combined mrp product line', html.includes('class="info-line mrp-product"'));
     assert('MRP and product on one line', html.includes('MRP.RS.39 CASTOR OIL 100ML'));
+    assert('pack date and expiry on second line', html.includes('pkd:jun 26 EXP.12 MONTHS'));
   } else {
     assert('standard barcode number style', html.includes('font-size: 8pt'));
-    assert('standard footer line style', html.includes('font-size: 7.5pt'));
-    assert('standard mrp+product line style', html.includes('font-size: 7pt'));
+    assert('standard info line style', html.includes('font-size: 6pt'));
     assert('standard combined mrp product line', html.includes('class="info-line mrp-product"'));
   }
 
@@ -176,6 +174,20 @@ runScenario('Partial last row', 4, 'tvs_neo46');
 runScenario('Max batch slice', 30, 'tvs_neo46');
 runScenario('Zebra preset one row', 3, 'zebra_3col');
 runScenario('Zebra two rows', 6, 'zebra_3col');
+
+const productLabels = buildProductLabels([
+  {
+    barcode: '89012345',
+    name: 'CASTOR OIL 100ML',
+    price: 125,
+    packDate: 'JAN 15',
+    expiryText: '24 MONTHS',
+  },
+]);
+assert('product label uses product price for MRP', productLabels[0].mrp === '125');
+const productDoc = buildPrintDocument(productLabels, 'Product MRP', { presetId: 'tvs_neo46' });
+assert('product MRP in print HTML', productDoc.html.includes('MRP.RS.125 CASTOR OIL 100ML'));
+assert('product pack/exp on second line', productDoc.html.includes('pkd:JAN 15 EXP.24 MONTHS'));
 
 // Write sample HTML files for manual browser check before demo
 import { writeFileSync, mkdirSync } from 'node:fs';

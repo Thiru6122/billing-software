@@ -1,16 +1,47 @@
+import { useState } from 'react';
+import { Button, Modal, message, Tag } from 'antd';
+import { SyncOutlined } from '@ant-design/icons';
+import { useDispatch } from 'react-redux';
 import CrudModule from '@/modules/CrudModule/CrudModule';
 import ProductForm from '@/forms/ProductForm';
 import useLanguage from '@/locale/useLanguage';
-import { Tag } from 'antd';
+import { request } from '@/request';
+import { crud } from '@/redux/crud/actions';
 
 export default function Product() {
   const translate = useLanguage();
+  const dispatch = useDispatch();
   const entity = 'product';
+  const [backfillLoading, setBackfillLoading] = useState(false);
+
   const searchConfig = {
     displayLabels: ['name', 'sku'],
     searchFields: 'name,sku,barcode',
   };
   const deleteModalLabels = ['name'];
+
+  const handleBackfillHsn = () => {
+    Modal.confirm({
+      title: translate('backfill_hsn_confirm_title'),
+      content: translate('backfill_hsn_confirm_message'),
+      okText: translate('backfill_hsn_codes'),
+      onOk: async () => {
+        setBackfillLoading(true);
+        try {
+          const res = await request.post({
+            entity: 'product/backfillHsn',
+            jsonData: {},
+          });
+          if (res?.success) {
+            message.success(res.message);
+            dispatch(crud.list({ entity }));
+          }
+        } finally {
+          setBackfillLoading(false);
+        }
+      },
+    });
+  };
 
   const dataTableColumns = [
     {
@@ -20,6 +51,11 @@ export default function Product() {
     {
       title: 'SKU',
       dataIndex: 'sku',
+    },
+    {
+      title: translate('hsn_code'),
+      dataIndex: 'hsnCode',
+      render: (hsnCode) => hsnCode || <Tag color="orange">—</Tag>,
     },
     {
       title: translate('barcode'),
@@ -84,10 +120,21 @@ export default function Product() {
   };
 
   return (
-    <CrudModule
-      createForm={<ProductForm />}
-      updateForm={<ProductForm isUpdateForm={true} />}
-      config={config}
-    />
+    <>
+      <div style={{ marginBottom: 12, textAlign: 'right' }}>
+        <Button
+          icon={<SyncOutlined />}
+          loading={backfillLoading}
+          onClick={handleBackfillHsn}
+        >
+          {translate('backfill_hsn_codes')}
+        </Button>
+      </div>
+      <CrudModule
+        createForm={<ProductForm />}
+        updateForm={<ProductForm isUpdateForm={true} />}
+        config={config}
+      />
+    </>
   );
 }

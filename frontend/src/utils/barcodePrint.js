@@ -112,10 +112,19 @@ export function getDefaultLabelTemplate(companyName = '') {
     enterpriseLine1: 'Ashwin',
     companyName: companyName || 'PURE',
     productDescription: 'CASTOR OIL 100ML',
-    mrp: '39',
+    mrp: '',
     packDate: `${month} ${day}`,
     expiryText: '12 MONTHS',
   };
+}
+
+/** Plain MRP number for label text (no currency symbol). */
+export function formatLabelMrp(price) {
+  if (price == null || price === '') return '';
+  const amount = Number(price);
+  if (Number.isNaN(amount)) return String(price).trim();
+  if (Math.abs(amount - Math.round(amount)) < 0.001) return String(Math.round(amount));
+  return amount.toFixed(2).replace(/\.?0+$/, '') || amount.toFixed(2);
 }
 
 export function loadLabelTemplate(companyName = '') {
@@ -172,7 +181,7 @@ export function buildProductLabels(products, { useMoneyFormatter, template } = {
       enterpriseLine1: p.enterpriseLine1 || t.enterpriseLine1,
       companyName: p.companyName || t.companyName,
       productDescription: p.name || t.productDescription || '',
-      mrp: t.mrp ?? (useMoneyFormatter ? useMoneyFormatter({ amount: p.price }) : String(p.price ?? '')),
+      mrp: formatLabelMrp(p.price),
       packDate: p.packDate || t.packDate,
       expiryText: p.expiryText || t.expiryText,
     }));
@@ -193,7 +202,6 @@ function renderRetailLabelHtml(label, layout) {
       <div class="label-inner">
         <div class="top-spacer" aria-hidden="true"></div>
         <div class="label-content">
-          ${label.enterpriseLine1 ? `<div class="enterprise-line">${escapeHtml(label.enterpriseLine1)}</div>` : ''}
           <div class="company">${escapeHtml(label.companyName)}</div>
           <div class="barcode-wrap">${barcode}</div>
           <div class="code">${escapeHtml(label.code)}</div>
@@ -321,8 +329,8 @@ function getLayoutCss(layout, rowCount = 1) {
 
   const infoLineCss = `
           .info-line {
-            font-size: 7pt;
-            line-height: 1.12;
+            font-size: 6pt;
+            line-height: 1.08;
             width: 100%;
             max-width: 100%;
             text-align: center;
@@ -332,33 +340,21 @@ function getLayoutCss(layout, rowCount = 1) {
             print-color-adjust: exact;
           }
           .info-line.mrp-product {
-            font-size: 7.5pt;
+            font-size: 6pt;
             font-weight: 700;
             white-space: nowrap;
             text-overflow: ellipsis;
           }
           .info-line.footer {
-            font-size: 8pt;
+            font-size: 6pt;
             font-weight: 700;
-            margin-top: 0.1mm;
+            margin-top: 0.05mm;
+            white-space: nowrap;
+            text-overflow: ellipsis;
           }
         `;
 
   const labelBodyCss = `
-          .enterprise-line {
-            font-size: 6.5pt;
-            font-weight: 700;
-            line-height: 1.05;
-            color: #000;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-            margin-bottom: 0.12mm;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
           .company {
             font-weight: 700;
             font-size: 9pt;

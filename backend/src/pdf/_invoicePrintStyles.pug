@@ -1,270 +1,371 @@
 style.
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
-    margin: 0;
-    padding: 0;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 9.5pt;
-    line-height: 1.28;
-    color: #111;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11pt;
+    line-height: 1.18;
+    color: #000;
     background: #fff;
   }
-  html.paper-a5 body { font-size: 10pt; line-height: 1.32; }
-  html.paper-a4 body { font-size: 10.5pt; line-height: 1.32; }
+
+  html.paper-a5 body { font-size: 10pt; }
+  html.paper-a4 body { font-size: 11.5pt; }
+
   .invoice-box {
     width: 100%;
-    border: 1px solid #111;
+    border: 1px solid #000;
   }
-  .top-bar {
-    display: table;
-    width: 100%;
-    border-bottom: 1px solid #111;
-  }
-  .top-bar > div {
-    display: table-cell;
-    padding: 2px 5px;
-    vertical-align: middle;
-    font-size: 8.5pt;
-  }
-  html.paper-a4 .top-bar > div { padding: 3px 6px; font-size: 9pt; }
-  html.paper-a5 .top-bar .center { font-size: 11pt; }
-  .top-bar .center {
-    text-align: center;
+
+  .doc-title {
+    text-align: left;
     font-weight: 700;
-    font-size: 10.5pt;
+    font-size: 13pt;
+    letter-spacing: 0.6px;
+    padding: 3px 8px 1px;
   }
-  html.paper-a4 .top-bar .center { font-size: 11.5pt; }
-  .top-bar .right { text-align: right; }
+
+  html.paper-a4 .doc-title {
+    font-size: 14pt;
+    padding: 4px 10px 2px;
+  }
+
   .company-header {
-    display: table;
-    width: 100%;
-    border-bottom: 1px solid #111;
-  }
-  .company-header .logo-cell {
-    display: table-cell;
-    width: 52px;
-    padding: 3px 4px;
-    vertical-align: middle;
-    border-right: 1px solid #111;
-  }
-  html.paper-a4 .company-header .logo-cell { width: 62px; padding: 4px 5px; }
-  .company-header .logo-cell img {
-    max-width: 46px;
-    max-height: 46px;
-    object-fit: contain;
-  }
-  html.paper-a4 .company-header .logo-cell img { max-width: 54px; max-height: 54px; }
-  .company-header .info-cell {
-    display: table-cell;
-    padding: 3px 6px;
-    vertical-align: middle;
     text-align: center;
+    padding: 1px 8px 4px;
+    border-bottom: 1px solid #000;
   }
-  html.paper-a4 .company-header .info-cell { padding: 4px 8px; }
-  .company-header .info-cell .name {
-    font-size: 11pt;
+
+  html.paper-a4 .company-header { padding: 2px 10px 5px; }
+
+  .company-header .name {
+    font-size: 15pt;
     font-weight: 700;
+    margin-bottom: 0;
+  }
+
+  html.paper-a4 .company-header .name {
+    font-size: 17pt;
     margin-bottom: 1px;
   }
-  html.paper-a4 .company-header .info-cell .name { font-size: 12.5pt; margin-bottom: 2px; }
-  .company-header .info-cell .meta {
-    font-size: 8pt;
-    line-height: 1.3;
+
+  .company-header .address,
+  .company-header .contact,
+  .company-header .gst {
+    font-size: 10.5pt;
+    line-height: 1.15;
   }
-  html.paper-a4 .company-header .info-cell .meta { font-size: 8.5pt; }
-  .two-col {
+
+  html.paper-a4 .company-header .address,
+  html.paper-a4 .company-header .contact,
+  html.paper-a4 .company-header .gst {
+    font-size: 11.5pt;
+  }
+
+  .billing-row {
     display: table;
     width: 100%;
-    border-bottom: 1px solid #111;
+    border-bottom: 1px solid #000;
   }
-  .two-col .col {
+
+  .billing-row .col {
     display: table-cell;
     width: 50%;
     vertical-align: top;
-    padding: 0;
+    padding: 3px 8px;
+    font-size: 10.5pt;
+    line-height: 1.15;
   }
-  .two-col .col:first-child { border-right: 1px solid #111; }
-  .section-title {
-    font-weight: 700;
-    padding: 2px 5px;
-    border-bottom: 1px solid #111;
-    background: #fafafa;
-    font-size: 8.5pt;
+
+  html.paper-a4 .billing-row .col {
+    padding: 4px 10px;
+    font-size: 11.5pt;
   }
-  html.paper-a4 .section-title { padding: 3px 6px; font-size: 9pt; }
-  .field-grid {
+
+  .billing-row .col:first-child { border-right: 1px solid #000; }
+  .billing-row .label { font-weight: 700; }
+
+  .meta-table {
     width: 100%;
     border-collapse: collapse;
   }
-  .field-grid td {
-    padding: 1px 5px;
+
+  .meta-table td {
+    padding: 0;
     vertical-align: top;
-    border-bottom: 1px solid #ddd;
-    font-size: 8.5pt;
+    line-height: 1.15;
   }
-  html.paper-a4 .field-grid td { padding: 2px 6px; font-size: 9pt; }
-  .field-grid tr:last-child td { border-bottom: none; }
-  .field-grid .label {
-    width: 42%;
-    font-weight: 600;
+
+  .meta-table .label {
+    font-weight: 700;
     white-space: nowrap;
-  }
-  .bank-qr-row {
-    display: table;
-    width: 100%;
-  }
-  .bank-qr-row .bank-details {
-    display: table-cell;
-    vertical-align: top;
-    width: 65%;
     padding-right: 4px;
   }
-  .bank-qr-row .e-invoice-qr {
-    display: table-cell;
-    vertical-align: middle;
-    width: 35%;
-    text-align: center;
-    padding-left: 2px;
-  }
-  .bank-qr-row .e-invoice-qr img {
-    width: 50px;
-    height: 50px;
-    display: block;
-    margin: 0 auto 1px;
-  }
-  html.paper-a4 .bank-qr-row .e-invoice-qr img { width: 58px; height: 58px; }
-  .bank-qr-row .e-invoice-qr .qr-label {
-    font-size: 7pt;
-    font-weight: 600;
-  }
+
   .items-table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
   }
-  .items-table th,
-  .items-table td {
-    border: 1px solid #111;
-    padding: 2px 3px;
-    font-size: 8.5pt;
-    vertical-align: top;
-    word-wrap: break-word;
+
+  .items-table thead {
+    display: table-header-group;
   }
-  html.paper-a4 .items-table th,
-  html.paper-a4 .items-table td { padding: 3px 4px; font-size: 9pt; }
-  html.paper-a5 .items-table th,
-  html.paper-a5 .items-table td { font-size: 9pt; }
-  .items-table th {
-    background: #f5f5f5;
+
+  .items-table thead th {
+    border: 1px solid #000;
+    padding: 2px 2px;
+    font-size: 9.5pt;
+    vertical-align: middle;
     font-weight: 700;
     text-align: center;
+    white-space: nowrap;
+    line-height: 1.1;
   }
-  .items-table td.num { text-align: right; white-space: nowrap; }
-  .items-table td.center { text-align: center; }
-  .items-table td.left { text-align: left; }
+
+  html.paper-a4 .items-table thead th {
+    padding: 2px 3px;
+    font-size: 10.5pt;
+  }
+
+  .items-table tbody tr.item-row td,
+  .items-table tbody tr.blank-row-fill td {
+    border-top: none;
+    border-bottom: none;
+    border-left: 1px solid #000;
+    border-right: none;
+    padding: 0 2px;
+    font-size: 10pt;
+    vertical-align: top;
+    line-height: 1.15;
+  }
+
+  html.paper-a4 .items-table tbody tr.item-row td,
+  html.paper-a4 .items-table tbody tr.blank-row-fill td {
+    padding: 0 3px;
+    font-size: 11pt;
+  }
+
+  .items-table tbody tr.item-row td:last-child,
+  .items-table tbody tr.blank-row-fill td:last-child {
+    border-right: 1px solid #000;
+  }
+
+  .items-table tbody tr.blank-row-fill td {
+    padding: 0;
+    line-height: 1;
+  }
+
+  .items-table .col-sno { width: 5%; text-align: center; }
+
+  .items-table .col-hsn {
+    width: 12%;
+    text-align: center;
+    white-space: nowrap;
+    word-wrap: normal;
+    overflow-wrap: normal;
+    font-size: 9pt;
+    line-height: 1.15;
+  }
+
+  html.paper-a4 .items-table .col-hsn { font-size: 10pt; }
+
+  .items-table .col-items {
+    width: 32%;
+    text-align: left;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+
+  .items-table .col-qty { width: 7%; text-align: right; }
+  .items-table .col-rate { width: 11%; text-align: right; }
+  .items-table .col-gst { width: 7%; text-align: right; white-space: nowrap; }
+  .items-table .col-amount { width: 14%; text-align: right; white-space: nowrap; }
+
   .items-table .desc-sub {
     display: block;
-    color: #555;
-    font-size: 7.5pt;
-    margin-top: 1px;
-  }
-  html.paper-a4 .items-table .desc-sub { font-size: 8pt; }
-  .summary-row td {
-    font-weight: 700;
-    background: #fafafa;
-  }
-  .amount-words {
-    padding: 3px 5px;
-    border-top: 1px solid #111;
-    border-bottom: 1px solid #111;
     font-size: 8.5pt;
+    margin-top: 0;
+    line-height: 1.1;
   }
-  html.paper-a4 .amount-words { padding: 4px 6px; font-size: 9pt; }
-  .payment-summary {
+
+  html.paper-a4 .items-table .desc-sub { font-size: 9pt; }
+
+  .items-table.no-lines th,
+  .items-table.no-lines tbody td {
+    border: none;
+  }
+
+  .items-table.no-lines thead th {
+    border-bottom: 1px solid #000;
+  }
+
+  .invoice-bottom {
+    page-break-inside: avoid;
+  }
+
+  .summary-row {
     display: table;
     width: 100%;
-    border-bottom: 1px solid #111;
+    border-top: 1px solid #000;
+    page-break-inside: avoid;
   }
-  .payment-summary .left,
-  .payment-summary .right {
+
+  .summary-row .left,
+  .summary-row .right {
     display: table-cell;
     vertical-align: top;
-    padding: 3px 5px;
-    font-size: 8.5pt;
+    padding: 3px 8px;
+    font-size: 10.5pt;
+    line-height: 1.15;
   }
-  html.paper-a4 .payment-summary .left,
-  html.paper-a4 .payment-summary .right { padding: 4px 6px; font-size: 9pt; }
-  .payment-summary .left { width: 55%; border-right: 1px solid #111; }
+
+  html.paper-a4 .summary-row .left,
+  html.paper-a4 .summary-row .right {
+    padding: 4px 10px;
+    font-size: 11.5pt;
+  }
+
+  .summary-row .left {
+    width: 58%;
+    border-right: 1px solid #000;
+  }
+
+  .summary-row .right { width: 42%; }
+
+  .tot-qty {
+    margin-bottom: 3px;
+    font-weight: 700;
+  }
+
   .tax-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 2px;
-    font-size: 8pt;
+    font-size: 9.5pt;
   }
-  html.paper-a4 .tax-table { font-size: 8.5pt; }
+
+  html.paper-a4 .tax-table { font-size: 10.5pt; }
+
   .tax-table th,
   .tax-table td {
-    border: 1px solid #ccc;
+    border: 1px solid #000;
     padding: 1px 3px;
     text-align: right;
   }
+
   html.paper-a4 .tax-table th,
   html.paper-a4 .tax-table td { padding: 2px 4px; }
+
   .tax-table th:first-child,
-  .tax-table td:first-child { text-align: left; }
-  .footer-grid {
+  .tax-table td:first-child { text-align: center; }
+
+  .amount-box {
+    border: 1px solid #000;
+    padding: 4px 8px;
+  }
+
+  html.paper-a4 .amount-box { padding: 5px 10px; }
+
+  .amount-box .line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    white-space: nowrap;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+
+  .amount-box .line:last-child { margin-bottom: 0; }
+
+  .amount-box .line span:last-child {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .amount-box .line.net {
+    font-weight: 700;
+    font-size: 12pt;
+  }
+
+  html.paper-a4 .amount-box .net { font-size: 13pt; }
+
+  .footer-row {
     display: table;
     width: 100%;
+    border-top: 1px solid #000;
+    min-height: 60px;
+    page-break-inside: avoid;
   }
-  .footer-grid .col {
+
+  html.paper-a4 .footer-row { min-height: 68px; }
+
+  .footer-row .col {
     display: table-cell;
-    width: 33.33%;
+    width: 50%;
     vertical-align: top;
-    border-right: 1px solid #111;
-    padding: 4px 5px;
+    padding: 4px 8px;
+    font-size: 10.5pt;
+    line-height: 1.15;
   }
-  html.paper-a4 .footer-grid .col { padding: 5px 6px; }
-  .footer-grid .col:last-child { border-right: none; }
-  .footer-grid .col-title {
+
+  html.paper-a4 .footer-row .col {
+    padding: 5px 10px;
+    font-size: 11.5pt;
+  }
+
+  .footer-row .col:first-child { border-right: 1px solid #000; }
+
+  .bank-title {
     font-weight: 700;
-    margin-bottom: 3px;
-    font-size: 8.5pt;
+    text-decoration: underline;
+    margin-bottom: 2px;
   }
-  html.paper-a4 .footer-grid .col-title { margin-bottom: 4px; font-size: 9pt; }
-  .terms-list {
-    margin: 0;
-    padding-left: 12px;
-    font-size: 7.5pt;
-    line-height: 1.3;
+
+  .footer-note {
+    margin-top: 3px;
+    font-size: 9.5pt;
+    font-style: italic;
   }
-  html.paper-a4 .terms-list { font-size: 8pt; line-height: 1.35; }
-  .bank-table td {
-    padding: 1px 0;
-    font-size: 8pt;
+
+  .signature-left {
+    margin-top: 10px;
+    font-size: 10pt;
   }
-  html.paper-a4 .bank-table td { font-size: 8.5pt; }
-  .bank-table .label { font-weight: 600; width: 38%; }
-  .signature-box {
-    text-align: right;
-    padding-top: 6px;
-    font-size: 8.5pt;
-  }
-  html.paper-a4 .signature-box { padding-top: 10px; font-size: 9pt; }
-  .signature-line {
+
+  html.paper-a4 .signature-left {
     margin-top: 14px;
-    border-top: 1px solid #111;
-    display: inline-block;
-    min-width: 100px;
-    text-align: center;
-    padding-top: 2px;
+    font-size: 11pt;
   }
-  html.paper-a4 .signature-line { margin-top: 20px; min-width: 120px; }
-  .page-footer {
-    text-align: center;
-    font-size: 7pt;
-    color: #666;
-    padding: 3px;
-    border-top: 1px solid #111;
+
+  .signature-right {
+    text-align: right;
+    height: 100%;
   }
-  html.paper-a4 .page-footer { font-size: 7.5pt; padding: 4px; }
-  .dash { color: #888; }
+
+  .signature-right .for-company {
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  html.paper-a4 .signature-right .for-company { margin-bottom: 20px; }
+
+  .signature-right .signatory { font-size: 10pt; }
+  html.paper-a4 .signature-right .signatory { font-size: 11pt; }
+
+  @media print {
+    .invoice-box {
+      page-break-inside: auto;
+    }
+
+    .items-table thead {
+      display: table-header-group;
+    }
+
+    .items-table tbody tr.item-row {
+      page-break-inside: avoid;
+    }
+
+    .items-table tbody tr.blank-row-fill {
+      page-break-inside: avoid;
+    }
+  }

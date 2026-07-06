@@ -18,6 +18,7 @@ import { UploadOutlined, PlusOutlined } from '@ant-design/icons';
 import useLanguage from '@/locale/useLanguage';
 import { request } from '@/request';
 import { useMoney } from '@/settings';
+import { enhanceColumnsWithSort } from '@/utils/tableColumns';
 
 function parseCsv(text) {
   const lines = text.split(/\r?\n/).filter((line) => line.trim());
@@ -100,19 +101,20 @@ export default function Inventory() {
     }
   };
 
-  const lowStockColumns = [
+  const lowStockColumns = enhanceColumnsWithSort([
     { title: translate('name'), dataIndex: 'name' },
     { title: 'SKU', dataIndex: 'sku' },
     { title: translate('quantity'), dataIndex: 'quantity' },
     { title: translate('min_quantity'), dataIndex: 'minQuantity' },
     { title: translate('Price'), dataIndex: 'price' },
-  ];
+  ]);
 
-  const movementColumns = [
+  const movementColumns = enhanceColumnsWithSort([
     {
       title: translate('product'),
       dataIndex: ['product', 'name'],
       render: (_, record) => record.product?.name || '-',
+      sorter: (a, b) => (a.product?.name || '').localeCompare(b.product?.name || ''),
     },
     { title: translate('type'), dataIndex: 'movementType' },
     { title: translate('quantity'), dataIndex: 'quantityChange' },
@@ -121,8 +123,9 @@ export default function Inventory() {
       title: translate('date'),
       dataIndex: 'created',
       render: (date) => (date ? new Date(date).toLocaleString() : '-'),
+      sorter: (a, b) => new Date(a.created || 0) - new Date(b.created || 0),
     },
-  ];
+  ]);
 
   return (
     <div className="pad20">

@@ -38,7 +38,6 @@ export default function ProductForm({ isUpdateForm = false }) {
       >
         <Input />
       </Form.Item>
-      <ProductHsnSuggest />
       <Form.Item label="SKU" name="sku">
         <Input placeholder="SKU-001" />
       </Form.Item>
@@ -89,6 +88,7 @@ export default function ProductForm({ isUpdateForm = false }) {
       >
         <Input placeholder="e.g. 1515" maxLength={8} />
       </Form.Item>
+      <ProductHsnSuggest />
       <Form.Item label="GST %" name="taxRate" initialValue={0}>
         <SelectAsync
           entity="taxes"

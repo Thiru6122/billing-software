@@ -11,7 +11,7 @@ export function buildInvoiceLineItem(product, quantity = 1, taxRate = 0) {
     price,
     quantity: qty,
     total: Number.parseFloat(calculate.multiply(price, qty)),
-    description: product.sku ? `SKU: ${product.sku}` : '',
+    description: '',
   };
 }
 

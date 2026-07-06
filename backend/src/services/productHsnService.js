@@ -71,11 +71,14 @@ async function findCategoryMapping(storeId, categoryName) {
 }
 
 async function resolveProductHsn({ storeId, hsnCode, category, taxRate, name }) {
+  const userTaxRate =
+    taxRate !== undefined && taxRate !== null && taxRate !== '' ? Number(taxRate) : null;
   const normalizedInput = String(hsnCode || '').trim();
+
   if (normalizedInput) {
     return {
       hsnCode: normalizeHsnCode(normalizedInput),
-      taxRate: Number(taxRate) || 0,
+      ...(userTaxRate != null && !Number.isNaN(userTaxRate) ? { taxRate: userTaxRate } : {}),
     };
   }
 
@@ -83,7 +86,7 @@ async function resolveProductHsn({ storeId, hsnCode, category, taxRate, name }) 
   if (fromCategory) {
     return {
       hsnCode: normalizeHsnCode(fromCategory.hsnCode),
-      taxRate: Number(taxRate) || fromCategory.taxRate || 0,
+      taxRate: userTaxRate != null && !Number.isNaN(userTaxRate) ? userTaxRate : fromCategory.taxRate || 0,
     };
   }
 
@@ -91,7 +94,7 @@ async function resolveProductHsn({ storeId, hsnCode, category, taxRate, name }) 
   if (fromName) {
     return {
       hsnCode: normalizeHsnCode(fromName.hsnCode),
-      taxRate: Number(taxRate) || fromName.taxRate || 0,
+      taxRate: userTaxRate != null && !Number.isNaN(userTaxRate) ? userTaxRate : fromName.taxRate || 0,
     };
   }
 
@@ -99,18 +102,39 @@ async function resolveProductHsn({ storeId, hsnCode, category, taxRate, name }) 
   if (fromDatabase?.hsnCode) {
     return {
       hsnCode: normalizeHsnCode(fromDatabase.hsnCode),
-      taxRate: Number(taxRate) || fromDatabase.taxRate || 0,
+      taxRate:
+        userTaxRate != null && !Number.isNaN(userTaxRate) ? userTaxRate : fromDatabase.taxRate || 0,
     };
   }
 
   return {
     hsnCode: '',
-    taxRate: Number(taxRate) || 0,
+    ...(userTaxRate != null && !Number.isNaN(userTaxRate) ? { taxRate: userTaxRate } : { taxRate: 0 }),
   };
+}
+
+async function resolveHsnCodeOnly({ storeId, name, category }) {
+  const fromCategory = await findCategoryMapping(storeId, category);
+  if (fromCategory?.hsnCode) {
+    return normalizeHsnCode(fromCategory.hsnCode);
+  }
+
+  const fromName = lookupDefaultHsn(name);
+  if (fromName?.hsnCode) {
+    return normalizeHsnCode(fromName.hsnCode);
+  }
+
+  const fromDatabase = lookupHsnByProductName(name, category);
+  if (fromDatabase?.hsnCode) {
+    return normalizeHsnCode(fromDatabase.hsnCode);
+  }
+
+  return '';
 }
 
 module.exports = {
   normalizeHsnCode,
   lookupDefaultHsn,
   resolveProductHsn,
+  resolveHsnCodeOnly,
 };

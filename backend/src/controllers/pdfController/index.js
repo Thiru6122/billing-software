@@ -193,10 +193,10 @@ async function renderHtmlToPdf(htmlContent, { targetLocation, format = 'A4' }) {
       format,
       printBackground: true,
       margin: {
-        top: format === 'A5' ? '3mm' : '5mm',
-        right: format === 'A5' ? '3mm' : '5mm',
-        bottom: format === 'A5' ? '3mm' : '5mm',
-        left: format === 'A5' ? '3mm' : '5mm',
+        top: format === 'A5' ? '3mm' : '4mm',
+        right: format === 'A5' ? '3mm' : '4mm',
+        bottom: format === 'A5' ? '3mm' : '4mm',
+        left: format === 'A5' ? '3mm' : '4mm',
       },
     });
   } finally {
@@ -288,7 +288,7 @@ function normalizePaperFormat(format) {
 function wrapHtmlForPrint(html, format = 'A4') {
   const paper = normalizePaperFormat(format);
   const paperClass = paper === 'A5' ? 'paper-a5' : 'paper-a4';
-  const margin = paper === 'A5' ? '3mm' : '5mm';
+  const margin = paper === 'A5' ? '3mm' : '4mm';
 
   const printStyle = `
     <style>
@@ -304,12 +304,15 @@ function wrapHtmlForPrint(html, format = 'A4') {
         }
         .invoice-box {
           width: 100% !important;
+          page-break-inside: auto;
+        }
+        .invoice-bottom {
           page-break-inside: avoid;
         }
-        .footer-grid .col {
+        .footer-row .col {
           min-height: 0 !important;
         }
-        .items-table tr {
+        .items-table tbody tr.item-row {
           page-break-inside: avoid;
         }
       }
@@ -335,7 +338,7 @@ exports.wrapHtmlForPrint = wrapHtmlForPrint;
 
 exports.generatePdf = async (
   modelName,
-  info = { filename: 'pdf_file', format: 'A5', targetLocation: '' },
+  info = { filename: 'pdf_file', format: 'A4', targetLocation: '' },
   result
 ) => {
   const { targetLocation, format = 'A4' } = info;

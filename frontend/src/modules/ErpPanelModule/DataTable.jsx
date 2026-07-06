@@ -7,7 +7,6 @@ import {
   RedoOutlined,
   PlusOutlined,
   EllipsisOutlined,
-  ArrowRightOutlined,
   ArrowLeftOutlined,
 } from '@ant-design/icons';
 import { Dropdown, Table, Button } from 'antd';
@@ -19,6 +18,8 @@ import useLanguage from '@/locale/useLanguage';
 import { erp } from '@/redux/erp/actions';
 import { selectListItems } from '@/redux/erp/selectors';
 import { useErpContext } from '@/context/erp';
+import { enhanceColumnsWithSort } from '@/utils/tableColumns';
+import { useTableListLoader } from '@/utils/useTableListLoader';
 import { generate as uniqueId } from 'shortid';
 import { useNavigate } from 'react-router-dom';
 
@@ -81,6 +82,12 @@ export default function DataTable({ config, extra = [] }) {
   ];
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { loadList, handleTableChange, listParamsRef, sortState } = useTableListLoader(
+    dispatch,
+    entity,
+    erp
+  );
 
   const handleRead = (record) => {
     dispatch(erp.currentItem({ data: record }));
@@ -105,72 +112,75 @@ export default function DataTable({ config, extra = [] }) {
     navigate(`/invoice/pay/${record._id}`);
   };
 
-  dataTableColumns = [
-    ...dataTableColumns,
-    {
-      title: '',
-      key: 'action',
-      fixed: 'right',
-      render: (_, record) => (
-        <Dropdown
-          menu={{
-            items,
-            onClick: ({ key }) => {
-              switch (key) {
-                case 'read':
-                  handleRead(record);
-                  break;
-                case 'edit':
-                  handleEdit(record);
-                  break;
-                case 'download':
-                  handleDownload(record);
-                  break;
-                case 'delete':
-                  handleDelete(record);
-                  break;
-                case 'recordPayment':
-                  handleRecordPayment(record);
-                  break;
-                default:
-                  break;
-              }
-              // else if (key === '2')handleCloseTask
-            },
-          }}
-          trigger={['click']}
-        >
-          <EllipsisOutlined
-            style={{ cursor: 'pointer', fontSize: '24px' }}
-            onClick={(e) => e.preventDefault()}
-          />
-        </Dropdown>
-      ),
-    },
-  ];
-
-  const dispatch = useDispatch();
-
-  const handelDataTableLoad = (pagination) => {
-    const options = { page: pagination.current || 1, items: pagination.pageSize || 10 };
-    dispatch(erp.list({ entity, options }));
-  };
-
-  const dispatcher = () => {
-    dispatch(erp.list({ entity }));
-  };
+  dataTableColumns = enhanceColumnsWithSort(
+    [
+      ...dataTableColumns,
+      {
+        title: '',
+        key: 'action',
+        fixed: 'right',
+        render: (_, record) => (
+          <Dropdown
+            menu={{
+              items,
+              onClick: ({ key }) => {
+                switch (key) {
+                  case 'read':
+                    handleRead(record);
+                    break;
+                  case 'edit':
+                    handleEdit(record);
+                    break;
+                  case 'download':
+                    handleDownload(record);
+                    break;
+                  case 'delete':
+                    handleDelete(record);
+                    break;
+                  case 'recordPayment':
+                    handleRecordPayment(record);
+                    break;
+                  default:
+                    break;
+                }
+              },
+            }}
+            trigger={['click']}
+          >
+            <EllipsisOutlined
+              style={{ cursor: 'pointer', fontSize: '24px' }}
+              onClick={(e) => e.preventDefault()}
+            />
+          </Dropdown>
+        ),
+      },
+    ],
+    sortState
+  );
 
   useEffect(() => {
     const controller = new AbortController();
-    dispatcher();
+    loadList();
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [loadList]);
 
   const filterTable = (value) => {
-    const options = { equal: value, filter: searchConfig?.entity };
-    dispatch(erp.list({ entity, options }));
+    const options = {
+      page: 1,
+      items: listParamsRef.current.items || 10,
+    };
+
+    if (value) {
+      options.filter = searchConfig?.entity;
+      options.equal = value;
+    } else {
+      delete options.filter;
+      delete options.equal;
+    }
+
+    loadList(options);
   };
 
   return (
@@ -187,11 +197,8 @@ export default function DataTable({ config, extra = [] }) {
             displayLabels={['name']}
             searchFields={'name'}
             onChange={filterTable}
-            // redirectLabel={'Add New Client'}
-            // withRedirect
-            // urlToRedirect={'/customer'}
           />,
-          <Button onClick={handelDataTableLoad} key={`${uniqueId()}`} icon={<RedoOutlined />}>
+          <Button onClick={() => loadList()} key={`${uniqueId()}`} icon={<RedoOutlined />}>
             {translate('Refresh')}
           </Button>,
 
@@ -208,7 +215,7 @@ export default function DataTable({ config, extra = [] }) {
         dataSource={dataSource}
         pagination={pagination}
         loading={listIsLoading}
-        onChange={handelDataTableLoad}
+        onChange={handleTableChange}
         scroll={{ x: true }}
       />
     </>

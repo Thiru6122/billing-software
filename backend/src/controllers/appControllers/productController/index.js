@@ -13,6 +13,7 @@ const printBarcodeLabels = require('./printBarcodeLabels');
 const create = require('./create');
 const update = require('./update');
 const suggestHsn = require('./suggestHsn');
+const backfillHsn = require('./backfillHsn');
 
 function modelController() {
   const methods = createCRUDController('Product');
@@ -28,6 +29,7 @@ function modelController() {
   methods.labelPool = (req, res) => labelPool(req, res);
   methods.printBarcodeLabels = (req, res) => printBarcodeLabels(req, res);
   methods.suggestHsn = (req, res) => suggestHsn(req, res);
+  methods.backfillHsn = (req, res) => backfillHsn(req, res);
   return methods;
 }
 

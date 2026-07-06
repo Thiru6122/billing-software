@@ -32,6 +32,7 @@ import {
   getPreviewScaleStyle,
   getPreviewContainerStyle,
 } from '@/utils/barcodePrint';
+import { enhanceColumnsWithSort } from '@/utils/tableColumns';
 
 function expandProductLabels(products, qtyById, moneyFormatter) {
   const labels = [];
@@ -257,7 +258,7 @@ export default function Barcodes() {
     }, 0);
   }, [selectedProducts, labelQtyByProductId]);
 
-  const columns = [
+  const columns = enhanceColumnsWithSort([
     {
       title: translate('name'),
       dataIndex: 'name',
@@ -305,7 +306,7 @@ export default function Barcodes() {
         />
       ),
     },
-  ];
+  ]);
 
   const rowSelection = {
     selectedRowKeys,

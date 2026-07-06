@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import {
   EyeOutlined,
@@ -6,7 +6,6 @@ import {
   DeleteOutlined,
   EllipsisOutlined,
   RedoOutlined,
-  ArrowRightOutlined,
   ArrowLeftOutlined,
 } from '@ant-design/icons';
 import { Dropdown, Table, Button, Input } from 'antd';
@@ -18,6 +17,8 @@ import { selectListItems } from '@/redux/crud/selectors';
 import useLanguage from '@/locale/useLanguage';
 import { dataForTable } from '@/utils/dataStructure';
 import { useMoney, useDate } from '@/settings';
+import { enhanceColumnsWithSort } from '@/utils/tableColumns';
+import { useTableListLoader } from '@/utils/useTableListLoader';
 
 import { generate as uniqueId } from 'shortid';
 
@@ -70,6 +71,13 @@ export default function DataTable({ config, extra = [] }) {
     },
   ];
 
+  const dispatch = useDispatch();
+  const { loadList, handleTableChange, listParamsRef, sortState } = useTableListLoader(
+    dispatch,
+    entity,
+    crud
+  );
+
   const handleRead = (record) => {
     dispatch(crud.currentItem({ data: record }));
     panel.open();
@@ -103,77 +111,80 @@ export default function DataTable({ config, extra = [] }) {
     dispatchColumns = [...dataTableColumns];
   }
 
-  dataTableColumns = [
-    ...dispatchColumns,
-    {
-      title: '',
-      key: 'action',
-      fixed: 'right',
-      render: (_, record) => (
-        <Dropdown
-          menu={{
-            items,
-            onClick: ({ key }) => {
-              switch (key) {
-                case 'read':
-                  handleRead(record);
-                  break;
-                case 'edit':
-                  handleEdit(record);
-                  break;
+  dataTableColumns = enhanceColumnsWithSort(
+    [
+      ...dispatchColumns,
+      {
+        title: '',
+        key: 'action',
+        fixed: 'right',
+        render: (_, record) => (
+          <Dropdown
+            menu={{
+              items,
+              onClick: ({ key }) => {
+                switch (key) {
+                  case 'read':
+                    handleRead(record);
+                    break;
+                  case 'edit':
+                    handleEdit(record);
+                    break;
 
-                case 'delete':
-                  handleDelete(record);
-                  break;
-                case 'updatePassword':
-                  handleUpdatePassword(record);
-                  break;
+                  case 'delete':
+                    handleDelete(record);
+                    break;
+                  case 'updatePassword':
+                    handleUpdatePassword(record);
+                    break;
 
-                default:
-                  break;
-              }
-              // else if (key === '2')handleCloseTask
-            },
-          }}
-          trigger={['click']}
-        >
-          <EllipsisOutlined
-            style={{ cursor: 'pointer', fontSize: '24px' }}
-            onClick={(e) => e.preventDefault()}
-          />
-        </Dropdown>
-      ),
-    },
-  ];
+                  default:
+                    break;
+                }
+              },
+            }}
+            trigger={['click']}
+          >
+            <EllipsisOutlined
+              style={{ cursor: 'pointer', fontSize: '24px' }}
+              onClick={(e) => e.preventDefault()}
+            />
+          </Dropdown>
+        ),
+      },
+    ],
+    sortState
+  );
 
   const { result: listResult, isLoading: listIsLoading } = useSelector(selectListItems);
 
   const { pagination, items: dataSource } = listResult;
 
-  const dispatch = useDispatch();
-
-  const handelDataTableLoad = useCallback((pagination) => {
-    const options = { page: pagination.current || 1, items: pagination.pageSize || 10 };
-    dispatch(crud.list({ entity, options }));
-  }, []);
-
   const filterTable = (e) => {
     const value = e.target.value;
-    const options = { q: value, fields: searchConfig?.searchFields || '' };
-    dispatch(crud.list({ entity, options }));
-  };
+    const options = {
+      page: 1,
+      items: listParamsRef.current.items || 10,
+    };
 
-  const dispatcher = () => {
-    dispatch(crud.list({ entity }));
+    if (value) {
+      options.q = value;
+      options.fields = searchConfig?.searchFields || '';
+    } else {
+      delete options.q;
+      delete options.fields;
+    }
+
+    loadList(options);
   };
 
   useEffect(() => {
     const controller = new AbortController();
-    dispatcher();
+    loadList();
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [loadList]);
 
   return (
     <>
@@ -189,7 +200,7 @@ export default function DataTable({ config, extra = [] }) {
             placeholder={translate('search')}
             allowClear
           />,
-          <Button onClick={handelDataTableLoad} key={`${uniqueId()}`} icon={<RedoOutlined />}>
+          <Button onClick={() => loadList()} key={`${uniqueId()}`} icon={<RedoOutlined />}>
             {translate('Refresh')}
           </Button>,
 
@@ -206,7 +217,7 @@ export default function DataTable({ config, extra = [] }) {
         dataSource={dataSource}
         pagination={pagination}
         loading={listIsLoading}
-        onChange={handelDataTableLoad}
+        onChange={handleTableChange}
         scroll={{ x: true }}
       />
     </>

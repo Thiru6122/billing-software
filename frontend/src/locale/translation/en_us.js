@@ -513,9 +513,14 @@ const lang = {
   hsn_auto_assign_hint: 'Auto-filled from product name or category when you save. You can edit if needed.',
   hsn_auto_lookup_title: 'Automatic HSN lookup',
   hsn_auto_lookup_hint:
-    'Type the product name — HSN and GST are looked up from the official Indian GST code database (12,000+ codes). Pick another match if needed.',
+    'Type the product name — HSN is looked up from the official Indian GST code database (12,000+ codes). GST is not changed; set it manually or from category. Pick another match if needed.',
   lookup_hsn_from_name: 'Look up HSN from product name',
+  backfill_hsn_codes: 'Refresh missing HSN codes',
+  backfill_hsn_confirm_title: 'Refresh HSN codes?',
+  backfill_hsn_confirm_message:
+    'Look up and save HSN codes for all products that do not have one yet. Existing HSN and GST values are not changed.',
   hsn_suggested: 'Suggested',
+  reference_gst: 'reference GST',
   choose_hsn_match: 'Choose another HSN match',
   category_hsn_hint: 'Select a category to auto-fill HSN and GST. Manage categories under Product Categories.',
   select_product_category: 'Select category',

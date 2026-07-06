@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const Model = mongoose.model('Invoice');
 
 const { calculate } = require('@/helpers');
-const { increaseBySettingKey, loadSettings } = require('@/middlewares/settings');
+const { loadSettings } = require('@/middlewares/settings');
 const schema = require('./schemaValidate');
 const { normalizeInvoiceBody } = require('./normalizeBody');
 const { calculateInvoiceTotals } = require('@/services/invoiceGstService');
@@ -12,6 +12,7 @@ const {
   deductInvoiceStock,
   shouldDeductStock,
 } = require('@/services/stockService');
+const { reserveNextNumber } = require('@/services/documentNumberService');
 
 const create = async (req, res) => {
   let body = normalizeInvoiceBody(req.body);
@@ -65,7 +66,37 @@ const create = async (req, res) => {
     }
   }
 
-  const result = await new Model(body).save();
+  const year = Number(body.year) || new Date().getFullYear();
+  body.year = year;
+
+  try {
+    body.number = await reserveNextNumber({
+      storeId: req.storeId,
+      settingKey: 'last_invoice_number',
+      Model,
+      year,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      result: null,
+      message: err.message || 'Could not assign invoice number',
+    });
+  }
+
+  let result;
+  try {
+    result = await new Model(body).save();
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        result: null,
+        message: `Invoice number ${body.number} already exists for year ${year}`,
+      });
+    }
+    throw err;
+  }
   const fileId = 'invoice-' + result._id + '.pdf';
   const updateResult = await Model.findOneAndUpdate(
     { _id: result._id },
@@ -79,8 +110,6 @@ const create = async (req, res) => {
     await deductInvoiceStock(updateResult, req.storeId, req.admin._id);
     updateResult.stockDeducted = true;
   }
-
-  increaseBySettingKey({ settingKey: 'last_invoice_number', storeId: req.storeId });
 
   // Returning successfull response
   return res.status(200).json({

@@ -20,12 +20,17 @@ const routerApp = (entity, controller) => {
     router.route(`/${entity}/mail`).post(catchErrors(controller['mail']));
   }
 
+  if (entity === 'invoice') {
+    router.route(`/${entity}/nextNumber`).get(catchErrors(controller['nextNumber']));
+  }
+
   if (entity === 'quote') {
     router.route(`/${entity}/convert/:id`).get(catchErrors(controller['convert']));
   }
 
   if (entity === 'product') {
     router.route(`/${entity}/suggestHsn`).get(catchErrors(controller['suggestHsn']));
+    router.route(`/${entity}/backfillHsn`).post(catchErrors(controller['backfillHsn']));
     router.route(`/${entity}/barcode/:code`).get(catchErrors(controller['lookupByBarcode']));
     router.route(`/${entity}/generateLabelBatch`).post(catchErrors(controller['generateLabelBatch']));
     router.route(`/${entity}/labelPool`).get(catchErrors(controller['labelPool']));

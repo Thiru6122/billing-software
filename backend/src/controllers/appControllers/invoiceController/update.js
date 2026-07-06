@@ -16,6 +16,7 @@ const {
   shouldDeductStock,
   shouldRestoreStock,
 } = require('@/services/stockService');
+const { assertNumberAvailable } = require('@/services/documentNumberService');
 
 const update = async (req, res) => {
   let body = normalizeInvoiceBody(req.body);
@@ -87,9 +88,42 @@ const update = async (req, res) => {
     }
   }
 
-  const result = await Model.findOneAndUpdate({ _id: req.params.id, removed: false }, body, {
-    new: true, // return the new result instead of the old one
-  }).exec();
+  const numberChanged =
+    Number(body.number) !== Number(previousInvoice.number) ||
+    Number(body.year) !== Number(previousInvoice.year);
+
+  if (numberChanged) {
+    try {
+      await assertNumberAvailable(Model, {
+        storeId: req.storeId,
+        year: body.year,
+        number: body.number,
+        excludeId: req.params.id,
+      });
+    } catch (err) {
+      return res.status(err.status || 400).json({
+        success: false,
+        result: null,
+        message: err.message,
+      });
+    }
+  }
+
+  let result;
+  try {
+    result = await Model.findOneAndUpdate({ _id: req.params.id, removed: false }, body, {
+      new: true,
+    }).exec();
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        result: null,
+        message: `Invoice number ${body.number} already exists for year ${body.year}`,
+      });
+    }
+    throw err;
+  }
 
   if (willDeduct) {
     await deductInvoiceStock(result, req.storeId, req.admin._id);
