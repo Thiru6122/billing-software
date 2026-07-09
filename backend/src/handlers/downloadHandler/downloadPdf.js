@@ -7,9 +7,7 @@ module.exports = downloadPdf = async (req, res, { directory, id }) => {
     const modelName = directory.slice(0, 1).toUpperCase() + directory.slice(1);
     if (mongoose.models[modelName]) {
       const Model = mongoose.model(modelName);
-      const result = await Model.findOne({
-        _id: id,
-      }).exec();
+      const result = await custom.populateDocumentForPdf(Model, Model.findOne({ _id: id })).exec();
 
       if (!result) {
         throw { name: 'ValidationError' };

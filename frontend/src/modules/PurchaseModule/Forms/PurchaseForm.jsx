@@ -11,7 +11,7 @@ import { useDate } from '@/settings';
 import useLanguage from '@/locale/useLanguage';
 import { useSelector } from 'react-redux';
 import { request } from '@/request';
-import calculate from '@/utils/calculate';
+import { computePurchaseGstFromItems } from '@/constants/indianStates';
 
 export default function PurchaseForm({ current = null }) {
   const { isLoading: settingsLoading } = useSelector(selectSettings);
@@ -30,6 +30,8 @@ function LoadPurchaseForm({ current = null }) {
   const { dateFormat } = useDate();
   const { last_purchase_number } = useSelector(selectFinanceSettings);
 
+  const [subTotal, setSubTotal] = useState(0);
+  const [taxTotal, setTaxTotal] = useState(0);
   const [total, setTotal] = useState(0);
   const [lastNumber, setLastNumber] = useState(() => (last_purchase_number ?? 0) + 1);
   const currentYear = new Date().getFullYear();
@@ -61,14 +63,11 @@ function LoadPurchaseForm({ current = null }) {
   }, [supplierId, form]);
 
   useEffect(() => {
-    let sum = 0;
-    items.forEach((item) => {
-      if (item?.quantity && item?.price) {
-        sum = calculate.add(sum, calculate.multiply(item.quantity, item.price));
-      }
-    });
-    setTotal(sum);
-    form.setFieldValue('taxRate', 0);
+    const totals = computePurchaseGstFromItems(items, form.getFieldValue('gstType') || 'intra');
+    setSubTotal(totals.subTotal);
+    setTaxTotal(totals.taxTotal);
+    setTotal(totals.total);
+    form.setFieldValue('taxRate', totals.taxRate);
   }, [items, form]);
 
   return (
@@ -134,11 +133,14 @@ function LoadPurchaseForm({ current = null }) {
       <Divider dashed />
 
       <Row gutter={[12, 12]} className="invoice-items-header">
-        <Col md={8}><p>{translate('raw_material')}</p></Col>
-        <Col md={3}><p>{translate('unit')}</p></Col>
-        <Col md={4}><p>{translate('Quantity')}</p></Col>
-        <Col md={4}><p>{translate('rate_per_unit')}</p></Col>
-        <Col md={4}><p>{translate('amount')}</p></Col>
+        <Col md={6}><p>{translate('raw_material')}</p></Col>
+        <Col md={2}><p>{translate('unit')}</p></Col>
+        <Col md={3}><p>{translate('Quantity')}</p></Col>
+        <Col md={3}><p>{translate('rate_excl_gst')}</p></Col>
+        <Col md={2}><p>{translate('gst_percent')}</p></Col>
+        <Col md={3}><p>{translate('gst_value_per_unit')}</p></Col>
+        <Col md={3}><p>{translate('total_per_unit')}</p></Col>
+        <Col md={3}><p>{translate('line_total')}</p></Col>
       </Row>
 
       <Form.List name="items">
@@ -178,7 +180,23 @@ function LoadPurchaseForm({ current = null }) {
             </Form.Item>
           </Col>
           <Col span={4} offset={10}>
-            <p style={{ textAlign: 'right', margin: 0, paddingTop: 5 }}>{translate('Total')} :</p>
+            <p style={{ textAlign: 'right', margin: 0, paddingTop: 5 }}>{translate('value_excl_gst')} :</p>
+          </Col>
+          <Col span={5}>
+            <MoneyInputFormItem readOnly value={subTotal} />
+          </Col>
+        </Row>
+        <Row gutter={[12, -5]}>
+          <Col span={4} offset={15}>
+            <p style={{ textAlign: 'right', margin: 0, paddingTop: 5 }}>{translate('gst_total')} :</p>
+          </Col>
+          <Col span={5}>
+            <MoneyInputFormItem readOnly value={taxTotal} />
+          </Col>
+        </Row>
+        <Row gutter={[12, -5]}>
+          <Col span={4} offset={15}>
+            <p style={{ textAlign: 'right', margin: 0, paddingTop: 5, fontWeight: 600 }}>{translate('Total')} :</p>
           </Col>
           <Col span={5}>
             <MoneyInputFormItem readOnly value={total} />

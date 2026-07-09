@@ -25,7 +25,7 @@ import { openDocumentPrint } from '@/utils/printDocument';
 import { useMoney, useDate } from '@/settings';
 import useMail from '@/hooks/useMail';
 import { useNavigate } from 'react-router-dom';
-import { splitGstInclusive } from '@/constants/indianStates';
+import { splitGstInclusive, computeGstExclusiveLine } from '@/constants/indianStates';
 
 const Item = ({ item, currentErp, isPurchase = false, isQuote = false }) => {
   const { moneyFormatter } = useMoney();
@@ -34,27 +34,50 @@ const Item = ({ item, currentErp, isPurchase = false, isQuote = false }) => {
   const { taxable: lineTaxable, gst: lineGst } = splitGstInclusive(lineInclusive, gstRate);
 
   if (isPurchase) {
+    const gstRate = Number(item.gstRate) || 0;
+    const { gstAmount: lineGst, total: lineTotal } = computeGstExclusiveLine(
+      item.quantity,
+      item.price,
+      gstRate
+    );
+    const gstPerUnit = Math.round(((Number(item.price) || 0) * gstRate) / 100 * 100) / 100;
+    const totalPerUnit = Math.round(((Number(item.price) || 0) + gstPerUnit) * 100) / 100;
+
     return (
       <Row gutter={[12, 0]} key={item._id}>
-        <Col className="gutter-row" span={8}>
+        <Col className="gutter-row" span={6}>
           <p style={{ marginBottom: 5 }}>
             <strong>{item.itemName}</strong>
           </p>
+          {gstRate > 0 && (
+            <p style={{ color: '#666', fontSize: 12 }}>
+              GST {gstRate}% · {item.unit || 'kg'}:{' '}
+              {moneyFormatter({ amount: totalPerUnit, currency_code: currentErp.currency })} incl. GST
+            </p>
+          )}
         </Col>
-        <Col className="gutter-row" span={3}>
+        <Col className="gutter-row" span={2}>
           <p>{item.unit || '—'}</p>
         </Col>
-        <Col className="gutter-row" span={4}>
+        <Col className="gutter-row" span={3}>
           <p style={{ textAlign: 'right' }}>{item.quantity}</p>
         </Col>
-        <Col className="gutter-row" span={4}>
+        <Col className="gutter-row" span={3}>
           <p style={{ textAlign: 'right' }}>
             {moneyFormatter({ amount: item.price, currency_code: currentErp.currency })}
           </p>
         </Col>
+        <Col className="gutter-row" span={2}>
+          <p style={{ textAlign: 'right' }}>{gstRate}%</p>
+        </Col>
+        <Col className="gutter-row" span={3}>
+          <p style={{ textAlign: 'right' }}>
+            {moneyFormatter({ amount: lineGst, currency_code: currentErp.currency })}
+          </p>
+        </Col>
         <Col className="gutter-row" span={4}>
           <p style={{ textAlign: 'right', fontWeight: '700' }}>
-            {moneyFormatter({ amount: lineInclusive, currency_code: currentErp.currency })}
+            {moneyFormatter({ amount: lineTotal, currency_code: currentErp.currency })}
           </p>
         </Col>
         <Divider dashed style={{ marginTop: 0, marginBottom: 15 }} />
@@ -357,20 +380,26 @@ export default function ReadItem({ config, selectedItem }) {
       <Row gutter={[12, 0]}>
         {entity === 'purchase' ? (
           <>
-            <Col className="gutter-row" span={8}>
+            <Col className="gutter-row" span={6}>
               <p><strong>{translate('raw_material')}</strong></p>
             </Col>
-            <Col className="gutter-row" span={3}>
+            <Col className="gutter-row" span={2}>
               <p><strong>{translate('unit')}</strong></p>
             </Col>
-            <Col className="gutter-row" span={4}>
+            <Col className="gutter-row" span={3}>
               <p style={{ textAlign: 'right' }}><strong>{translate('Quantity')}</strong></p>
             </Col>
-            <Col className="gutter-row" span={4}>
-              <p style={{ textAlign: 'right' }}><strong>{translate('rate_per_unit')}</strong></p>
+            <Col className="gutter-row" span={3}>
+              <p style={{ textAlign: 'right' }}><strong>{translate('rate_excl_gst')}</strong></p>
+            </Col>
+            <Col className="gutter-row" span={2}>
+              <p style={{ textAlign: 'right' }}><strong>{translate('gst_percent')}</strong></p>
+            </Col>
+            <Col className="gutter-row" span={3}>
+              <p style={{ textAlign: 'right' }}><strong>{translate('gst_total')}</strong></p>
             </Col>
             <Col className="gutter-row" span={4}>
-              <p style={{ textAlign: 'right' }}><strong>{translate('amount')}</strong></p>
+              <p style={{ textAlign: 'right' }}><strong>{translate('line_total')}</strong></p>
             </Col>
           </>
         ) : entity === 'quote' ? (
@@ -439,6 +468,22 @@ export default function ReadItem({ config, selectedItem }) {
         <Row gutter={[12, -5]}>
           {entity === 'purchase' ? (
             <>
+              <Col className="gutter-row" span={12}>
+                <p>{translate('value_excl_gst')} :</p>
+              </Col>
+              <Col className="gutter-row" span={12}>
+                <p>
+                  {moneyFormatter({ amount: currentErp.subTotal, currency_code: currentErp.currency })}
+                </p>
+              </Col>
+              <Col className="gutter-row" span={12}>
+                <p>{translate('gst_total')} :</p>
+              </Col>
+              <Col className="gutter-row" span={12}>
+                <p>
+                  {moneyFormatter({ amount: currentErp.taxTotal, currency_code: currentErp.currency })}
+                </p>
+              </Col>
               <Col className="gutter-row" span={12}>
                 <p>{translate('Total')} :</p>
               </Col>

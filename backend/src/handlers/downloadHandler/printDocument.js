@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { buildDocumentHtml, wrapHtmlForPrint } = require('@/controllers/pdfController');
+const { buildDocumentHtml, wrapHtmlForPrint, populateDocumentForPdf } = require('@/controllers/pdfController');
 
 const SUPPORTED = new Set(['invoice', 'quote', 'payment', 'offer', 'purchase']);
 
@@ -24,7 +24,7 @@ module.exports = printDocument = async (req, res, { directory, id }) => {
     }
 
     const Model = mongoose.model(modelName);
-    const result = await Model.findOne({ _id: id }).exec();
+    const result = await populateDocumentForPdf(Model, Model.findOne({ _id: id })).exec();
     if (!result) {
       return res.status(400).json({
         success: false,

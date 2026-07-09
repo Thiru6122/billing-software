@@ -66,10 +66,19 @@ mixin ashwinDocument(options)
         div
           span.label #{partyLabel}
           |  #{party.name || '—'}
-        if party.address
-          each line in String(party.address).split(/\r?\n/)
+        -
+          var addressText = party.address ? String(party.address).trim() : '';
+          var addressLines = addressText
+            ? (/\r?\n/.test(addressText)
+              ? addressText.split(/\r?\n/)
+              : addressText.split(/,\s*/))
+            : [];
+        if addressLines.length
+          each line in addressLines
             if line.trim()
               div= line.trim()
+        else if party.state
+          div= party.state
         if party.phone
           div PH: #{party.phone}
         if party.gstin

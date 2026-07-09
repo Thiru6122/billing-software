@@ -32,70 +32,25 @@ function enrichGstDocumentForPdf(result) {
   return model;
 }
 
-function getInvoiceCustomer(model) {
-  if (model.customerName) {
-    return {
-      name: model.customerName,
-      gstin: model.customerGstin || '',
-      phone: '',
-      email: '',
-      address: '',
-      state: '',
-    };
-  }
-
-  if (model.client) {
-    return {
-      name: model.client.name || '',
-      gstin: model.customerGstin || model.client.gstin || '',
-      phone: model.client.phone || '',
-      email: model.client.email || '',
-      address: model.client.address || '',
-      state: model.client.state || '',
-    };
-  }
+function getPartyFromModel(model, { defaultName = 'Walk-in Customer' } = {}) {
+  const client = model.client && typeof model.client === 'object' ? model.client : null;
 
   return {
-    name: 'Walk-in Customer',
-    gstin: model.customerGstin || '',
-    phone: '',
-    email: '',
-    address: '',
-    state: '',
+    name: model.customerName || client?.name || defaultName,
+    gstin: model.customerGstin || client?.gstin || '',
+    phone: client?.phone || '',
+    email: client?.email || '',
+    address: client?.address || '',
+    state: client?.state || model.placeOfSupply || '',
   };
 }
 
+function getInvoiceCustomer(model) {
+  return getPartyFromModel(model);
+}
+
 function getQuoteCustomer(model) {
-  if (model.customerName) {
-    return {
-      name: model.customerName,
-      gstin: model.customerGstin || '',
-      phone: '',
-      email: '',
-      address: '',
-      state: model.placeOfSupply || '',
-    };
-  }
-
-  if (model.client) {
-    return {
-      name: model.client.name || '',
-      gstin: model.customerGstin || model.client.gstin || '',
-      phone: model.client.phone || '',
-      email: model.client.email || '',
-      address: model.client.address || '',
-      state: model.client.state || model.placeOfSupply || '',
-    };
-  }
-
-  return {
-    name: 'Walk-in Customer',
-    gstin: model.customerGstin || '',
-    phone: '',
-    email: '',
-    address: '',
-    state: model.placeOfSupply || '',
-  };
+  return getPartyFromModel(model);
 }
 
 function getPurchaseSupplier(model) {
@@ -333,8 +288,20 @@ function wrapHtmlForPrint(html, format = 'A4') {
   return output;
 }
 
+function populateDocumentForPdf(Model, query) {
+  const paths = Model.schema.paths;
+  let next = query;
+
+  if (paths.client) next = next.populate('client');
+  if (paths.supplier) next = next.populate('supplier');
+  if (paths.createdBy) next = next.populate('createdBy', 'name email');
+
+  return next;
+}
+
 exports.buildDocumentHtml = buildDocumentHtml;
 exports.wrapHtmlForPrint = wrapHtmlForPrint;
+exports.populateDocumentForPdf = populateDocumentForPdf;
 
 exports.generatePdf = async (
   modelName,

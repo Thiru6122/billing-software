@@ -18,6 +18,23 @@ export default function ProductForm({ isUpdateForm = false }) {
     () => getDefaultLabelTemplate(companySettings.company_name),
     [companySettings.company_name]
   );
+  const price = Form.useWatch('price', form);
+  const cost = Form.useWatch('cost', form);
+  const taxRate = Form.useWatch('taxRate', form);
+
+  const priceGst = useMemo(() => {
+    const base = Number(price) || 0;
+    const rate = Number(taxRate) || 0;
+    const gst = Math.round(((base * rate) / 100) * 100) / 100;
+    return { gst, total: Math.round((base + gst) * 100) / 100 };
+  }, [price, taxRate]);
+
+  const costGst = useMemo(() => {
+    const base = Number(cost) || 0;
+    const rate = Number(taxRate) || 0;
+    const gst = Math.round(((base * rate) / 100) * 100) / 100;
+    return { gst, total: Math.round((base + gst) * 100) / 100 };
+  }, [cost, taxRate]);
 
   useEffect(() => {
     if (isUpdateForm || !form) return;
@@ -99,6 +116,15 @@ export default function ProductForm({ isUpdateForm = false }) {
           redirectLabel="Add GST rate"
           placeholder="Select GST %"
         />
+      </Form.Item>
+      <Form.Item label={translate('gst_value_per_unit')}>
+        <InputNumber min={0} style={{ width: '100%' }} readOnly value={priceGst.gst} />
+      </Form.Item>
+      <Form.Item label={translate('selling_price_incl_gst')}>
+        <InputNumber min={0} style={{ width: '100%' }} readOnly value={priceGst.total} />
+      </Form.Item>
+      <Form.Item label={translate('cost_incl_gst')}>
+        <InputNumber min={0} style={{ width: '100%' }} readOnly value={costGst.total} />
       </Form.Item>
       <Form.Item label={translate('description')} name="description">
         <Input.TextArea rows={2} />

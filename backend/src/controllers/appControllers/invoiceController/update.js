@@ -16,7 +16,7 @@ const {
   shouldDeductStock,
   shouldRestoreStock,
 } = require('@/services/stockService');
-const { assertNumberAvailable } = require('@/services/documentNumberService');
+const { assertNumberAvailable, syncSettingValue } = require('@/services/documentNumberService');
 
 const update = async (req, res) => {
   let body = normalizeInvoiceBody(req.body);
@@ -128,6 +128,10 @@ const update = async (req, res) => {
   if (willDeduct) {
     await deductInvoiceStock(result, req.storeId, req.admin._id);
     result.stockDeducted = true;
+  }
+
+  if (numberChanged) {
+    await syncSettingValue('last_invoice_number', req.storeId, Number(body.number));
   }
 
   // Returning successfull response

@@ -123,6 +123,53 @@ function computeInvoiceGstFromItems(items = [], gstType = 'intra') {
   };
 }
 
+function computeGstExclusiveLine(quantity, unitPrice, gstRate) {
+  const qty = Number(quantity) || 0;
+  const price = Number(unitPrice) || 0;
+  const rate = Number(gstRate) || 0;
+  const taxableValue = Math.round(qty * price * 100) / 100;
+  const gstAmount = Math.round(((taxableValue * rate) / 100) * 100) / 100;
+  const total = Math.round((taxableValue + gstAmount) * 100) / 100;
+
+  return { taxableValue, gstAmount, total };
+}
+
+function computePurchaseGstFromItems(items = [], gstType = 'intra') {
+  let subTotal = 0;
+  let taxTotal = 0;
+
+  items.forEach((item) => {
+    const { taxableValue, gstAmount, total } = computeGstExclusiveLine(
+      item.quantity,
+      item.price,
+      item.gstRate
+    );
+
+    item.taxableValue = taxableValue;
+    item.gstAmount = gstAmount;
+    item.total = total;
+
+    subTotal = Math.round((subTotal + taxableValue) * 100) / 100;
+    taxTotal = Math.round((taxTotal + gstAmount) * 100) / 100;
+  });
+
+  const gst = splitGstTaxTotal(taxTotal, gstType);
+  const effectiveTaxRate =
+    subTotal > 0 ? Math.round((taxTotal / subTotal) * 10000) / 100 : 0;
+
+  return {
+    subTotal,
+    taxTotal: gst.taxTotal,
+    cgstTotal: gst.cgstTotal,
+    sgstTotal: gst.sgstTotal,
+    igstTotal: gst.igstTotal,
+    gstType: gst.gstType,
+    total: Math.round((subTotal + taxTotal) * 100) / 100,
+    taxRate: effectiveTaxRate,
+    items,
+  };
+}
+
 function computeIndianGstTotals({ subTotal, taxRate, gstType = 'intra' }) {
   const taxable = Number(subTotal) || 0;
   const rate = Number(taxRate) || 0;
@@ -163,6 +210,8 @@ module.exports = {
   splitGstInclusive,
   splitGstTaxTotal,
   computeInvoiceGstFromItems,
+  computeGstExclusiveLine,
+  computePurchaseGstFromItems,
   computeIndianGstTotals,
   isValidGstin,
 };

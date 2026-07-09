@@ -101,6 +101,46 @@ export function computeInvoiceGstFromItems(items = [], gstType = 'intra') {
   };
 }
 
+export function computeGstExclusiveLine(quantity, unitPrice, gstRate) {
+  const qty = Number(quantity) || 0;
+  const price = Number(unitPrice) || 0;
+  const rate = Number(gstRate) || 0;
+  const taxableValue = Math.round(qty * price * 100) / 100;
+  const gstAmount = Math.round(((taxableValue * rate) / 100) * 100) / 100;
+  const total = Math.round((taxableValue + gstAmount) * 100) / 100;
+
+  return { taxableValue, gstAmount, total };
+}
+
+export function computePurchaseGstFromItems(items = [], gstType = 'intra') {
+  let subTotal = 0;
+  let taxTotal = 0;
+
+  (items || []).forEach((item) => {
+    if (!item) return;
+    const { taxableValue, gstAmount } = computeGstExclusiveLine(
+      item.quantity,
+      item.price,
+      item.gstRate
+    );
+    subTotal = Math.round((subTotal + taxableValue) * 100) / 100;
+    taxTotal = Math.round((taxTotal + gstAmount) * 100) / 100;
+  });
+
+  const gst = splitGstTaxTotal(taxTotal, gstType);
+
+  return {
+    subTotal,
+    taxTotal: gst.taxTotal,
+    cgstTotal: gst.cgstTotal,
+    sgstTotal: gst.sgstTotal,
+    igstTotal: gst.igstTotal,
+    gstType: gst.gstType,
+    total: Math.round((subTotal + taxTotal) * 100) / 100,
+    taxRate: subTotal > 0 ? Math.round((taxTotal / subTotal) * 10000) / 100 : 0,
+  };
+}
+
 export function computeIndianGstTotals({ subTotal, taxRate, gstType = 'intra' }) {
   const taxable = Number(subTotal) || 0;
   const rate = Number(taxRate) || 0;

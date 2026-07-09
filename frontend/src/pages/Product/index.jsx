@@ -97,6 +97,7 @@ export default function Product() {
     { title: translate('unit'), dataIndex: 'unit' },
     { title: translate('quantity'), dataIndex: 'quantity' },
     { title: translate('price'), dataIndex: 'price' },
+    { title: 'GST %', dataIndex: 'taxRate', render: (v) => (v ? `${v}%` : '—') },
     { title: translate('cost'), dataIndex: 'cost' },
     { title: translate('min_quantity'), dataIndex: 'minQuantity' },
     { title: translate('description'), dataIndex: 'description' },
