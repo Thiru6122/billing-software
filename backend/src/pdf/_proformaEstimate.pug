@@ -1,0 +1,83 @@
+mixin proformaEstimate(options)
+  -
+    var party = options.party || {};
+    var items = options.items || model.items || [];
+    var docNumber = options.docNumber || ('QU' + model.number);
+    var docDate = options.docDate || moment(model.date).format('DD/MM/YYYY');
+    var minTableRows = options.minTableRows != null ? options.minTableRows : 10;
+    var blankRowCount = Math.min(5, Math.max(0, minTableRows - items.length));
+    var netAmount = options.netAmount != null
+      ? options.netAmount
+      : (model.total != null ? model.total : (model.amount != null ? model.amount : 0));
+    var companyPhone = settings.company_phone || '';
+    var companyEmail = settings.company_email || '';
+    var companyAddress = settings.company_address
+      ? settings.company_address.split(/\r?\n/).map(function (line) { return line.trim(); }).filter(Boolean).join(', ')
+      : '';
+    var companyGstin = settings.company_gstin || settings.company_tax_number || '';
+    var partyAddress = party.address ? String(party.address).trim().replace(/\r?\n/g, ', ') : '';
+
+  .proforma-estimate
+    .doc-title= options.docTitle || 'Proforma Invoice'
+
+    .company-header
+      .name= settings.company_name || 'Company Name'
+      if companyAddress
+        .line.company-address= companyAddress
+      if companyPhone || companyEmail
+        .line.contact-line
+          if companyPhone
+            span PH:#{companyPhone}
+          if companyPhone && companyEmail
+            span.sep  |
+          if companyEmail
+            span= companyEmail
+      if companyGstin
+        .line GST IN:#{companyGstin}
+
+    hr.rule
+
+    .party-section
+      .party-line
+        span.label To :
+        |  #{party.name || '—'}
+      if partyAddress
+        .party-line.party-address= partyAddress
+      else if party.state
+        .party-line= party.state
+      if party.phone
+        .party-line PH: #{party.phone}
+
+    hr.rule
+
+    .meta-row
+      span No : #{docNumber}
+      span Date : #{docDate}
+
+    table.items-table
+      thead
+        tr
+          th.col-sno S.No
+          th.col-items Items
+          th.col-qty Qty
+          th.col-rate Rate
+          th.col-amount Amount
+      tbody
+        each item, index in items
+          tr.item-row
+            td.col-sno= index + 1
+            td.col-items= item.itemName
+            td.col-qty= item.quantity
+            td.col-rate= indianAmount(item.price)
+            td.col-amount= indianAmount(item.total)
+        - var n = 0
+        while n < blankRowCount
+          tr.blank-row
+            td.col-sno
+            td.col-items
+            td.col-qty
+            td.col-rate
+            td.col-amount
+          - n++
+
+    .net-total Net Amount : #{indianAmount(netAmount)}

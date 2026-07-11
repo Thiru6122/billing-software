@@ -115,6 +115,12 @@
   },
   {
     "settingCategory": "company_settings",
+    "settingKey": "company_gpay",
+    "settingValue": "9710660508",
+    "valueType": "string"
+  },
+  {
+    "settingCategory": "company_settings",
     "settingKey": "invoice_terms_conditions",
     "settingValue": "1. Goods once sold will not be taken back or exchanged.\n2. For delivery delays due to stock or transport, we are not liable.\n3. Any damage or complaint should be reported within 48 hours of delivery.\n4. Interest @ 18% p.a. will be charged on overdue bills.\n5. E & O E.\n6. Subject to jurisdiction.",
     "valueType": "string"

@@ -235,18 +235,32 @@ export default function ReadItem({ config, selectedItem }) {
             <Dropdown
               key={`${uniqueId()}`}
               menu={{
-                items: [
-                  {
-                    key: 'a4',
-                    label: translate('print_a4'),
-                    onClick: () => openDocumentPrint(entity, currentErp._id, 'A4'),
-                  },
-                  {
-                    key: 'a5',
-                    label: translate('print_a5'),
-                    onClick: () => openDocumentPrint(entity, currentErp._id, 'A5'),
-                  },
-                ],
+                items:
+                  entity === 'quote'
+                    ? [
+                        {
+                          key: 'a6',
+                          label: translate('print_a6'),
+                          onClick: () => openDocumentPrint(entity, currentErp._id, 'A6'),
+                        },
+                        {
+                          key: 'a4',
+                          label: translate('print_a4'),
+                          onClick: () => openDocumentPrint(entity, currentErp._id, 'A4'),
+                        },
+                      ]
+                    : [
+                        {
+                          key: 'a4',
+                          label: translate('print_a4'),
+                          onClick: () => openDocumentPrint(entity, currentErp._id, 'A4'),
+                        },
+                        {
+                          key: 'a5',
+                          label: translate('print_a5'),
+                          onClick: () => openDocumentPrint(entity, currentErp._id, 'A5'),
+                        },
+                      ],
               }}
             >
               <Button className="no-print" icon={<PrinterOutlined />}>

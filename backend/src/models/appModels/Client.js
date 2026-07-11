@@ -9,6 +9,7 @@ const schema = new mongoose.Schema({
     required: true,
   },
   phone: String,
+  gpay: { type: String, trim: true },
   country: String,
   address: String,
   state: String,

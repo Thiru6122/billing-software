@@ -11,6 +11,7 @@ style.
 
   html.paper-a5 body { font-size: 10pt; }
   html.paper-a4 body { font-size: 11.5pt; }
+  html.paper-a6 body { font-size: 11pt; line-height: 1.2; }
 
   .invoice-box {
     width: 100%;
@@ -30,6 +31,11 @@ style.
     padding: 4px 10px 2px;
   }
 
+  html.paper-a6 .doc-title {
+    font-size: 13pt;
+    padding: 3px 8px 2px;
+  }
+
   .company-header {
     text-align: center;
     padding: 1px 8px 4px;
@@ -37,6 +43,8 @@ style.
   }
 
   html.paper-a4 .company-header { padding: 2px 10px 5px; }
+
+  html.paper-a6 .company-header { padding: 2px 8px 4px; }
 
   .company-header .name {
     font-size: 15pt;
@@ -46,6 +54,11 @@ style.
 
   html.paper-a4 .company-header .name {
     font-size: 17pt;
+    margin-bottom: 1px;
+  }
+
+  html.paper-a6 .company-header .name {
+    font-size: 15pt;
     margin-bottom: 1px;
   }
 
@@ -60,6 +73,13 @@ style.
   html.paper-a4 .company-header .contact,
   html.paper-a4 .company-header .gst {
     font-size: 11.5pt;
+  }
+
+  html.paper-a6 .company-header .address,
+  html.paper-a6 .company-header .contact,
+  html.paper-a6 .company-header .gst {
+    font-size: 10.5pt;
+    line-height: 1.18;
   }
 
   .billing-row {
@@ -83,6 +103,11 @@ style.
   html.paper-a4 .billing-row .col {
     padding: 4px 10px;
     font-size: 11.5pt;
+  }
+
+  html.paper-a6 .billing-row .col {
+    padding: 3px 8px;
+    font-size: 10.5pt;
   }
 
   .billing-row .col:first-child { border-right: 1px solid #000; }
@@ -131,6 +156,11 @@ style.
     font-size: 10.5pt;
   }
 
+  html.paper-a6 .items-table thead th {
+    padding: 2px 2px;
+    font-size: 10pt;
+  }
+
   .items-table tbody tr.item-row td,
   .items-table tbody tr.blank-row-fill td {
     border-top: none;
@@ -147,6 +177,12 @@ style.
   html.paper-a4 .items-table tbody tr.blank-row-fill td {
     padding: 0 3px;
     font-size: 11pt;
+  }
+
+  html.paper-a6 .items-table tbody tr.item-row td,
+  html.paper-a6 .items-table tbody tr.blank-row-fill td {
+    padding: 0 2px;
+    font-size: 10pt;
   }
 
   .items-table tbody tr.item-row td:last-child,
@@ -173,6 +209,8 @@ style.
 
   html.paper-a4 .items-table .col-hsn { font-size: 10pt; }
 
+  html.paper-a6 .items-table .col-hsn { font-size: 9.5pt; }
+
   .items-table .col-items {
     width: 32%;
     text-align: left;
@@ -194,6 +232,8 @@ style.
 
   html.paper-a4 .items-table .desc-sub { font-size: 9pt; }
 
+  html.paper-a6 .items-table .desc-sub { font-size: 9pt; }
+
   .items-table.no-lines th,
   .items-table.no-lines tbody td {
     border: none;
@@ -205,6 +245,16 @@ style.
 
   .invoice-bottom {
     page-break-inside: avoid;
+  }
+
+  .invoice-box.compact-layout .invoice-bottom {
+    page-break-inside: auto;
+  }
+
+  .invoice-box.compact-layout .summary-row,
+  .invoice-box.compact-layout .amount-words {
+    page-break-inside: avoid;
+    page-break-before: auto;
   }
 
   .summary-row {
@@ -229,6 +279,12 @@ style.
     font-size: 11.5pt;
   }
 
+  html.paper-a6 .summary-row .left,
+  html.paper-a6 .summary-row .right {
+    padding: 3px 8px;
+    font-size: 10.5pt;
+  }
+
   .summary-row .left {
     width: 58%;
     border-right: 1px solid #000;
@@ -249,6 +305,8 @@ style.
 
   html.paper-a4 .tax-table { font-size: 10.5pt; }
 
+  html.paper-a6 .tax-table { font-size: 9.5pt; }
+
   .tax-table th,
   .tax-table td {
     border: 1px solid #000;
@@ -259,6 +317,9 @@ style.
   html.paper-a4 .tax-table th,
   html.paper-a4 .tax-table td { padding: 2px 4px; }
 
+  html.paper-a6 .tax-table th,
+  html.paper-a6 .tax-table td { padding: 1px 3px; }
+
   .tax-table th:first-child,
   .tax-table td:first-child { text-align: center; }
 
@@ -268,6 +329,8 @@ style.
   }
 
   html.paper-a4 .amount-box { padding: 5px 10px; }
+
+  html.paper-a6 .amount-box { padding: 4px 8px; }
 
   .amount-box .line {
     display: flex;
@@ -292,6 +355,31 @@ style.
 
   html.paper-a4 .amount-box .net { font-size: 13pt; }
 
+  html.paper-a6 .amount-box .net { font-size: 12pt; }
+
+  .amount-words {
+    border-top: 1px solid #000;
+    padding: 4px 8px;
+    font-size: 10.5pt;
+    line-height: 1.2;
+    page-break-inside: avoid;
+  }
+
+  html.paper-a4 .amount-words {
+    padding: 5px 10px;
+    font-size: 11.5pt;
+  }
+
+  html.paper-a6 .amount-words {
+    padding: 4px 8px;
+    font-size: 10.5pt;
+  }
+
+  .amount-words .label {
+    font-weight: 700;
+    margin-right: 4px;
+  }
+
   .footer-row {
     display: table;
     width: 100%;
@@ -301,6 +389,10 @@ style.
   }
 
   html.paper-a4 .footer-row { min-height: 68px; }
+
+  html.paper-a6 .footer-row { min-height: 52px; }
+
+  html.paper-a6 .footer-row.no-bank { min-height: 46px; }
 
   .footer-row .col {
     display: table-cell;
@@ -314,6 +406,11 @@ style.
   html.paper-a4 .footer-row .col {
     padding: 5px 10px;
     font-size: 11.5pt;
+  }
+
+  html.paper-a6 .footer-row .col {
+    padding: 4px 8px;
+    font-size: 10.5pt;
   }
 
   .footer-row .col:first-child { border-right: 1px solid #000; }
@@ -330,6 +427,15 @@ style.
     font-style: italic;
   }
 
+  html.paper-a6 .footer-note {
+    margin-top: 0;
+    font-size: 10pt;
+  }
+
+  html.paper-a6 .footer-row.no-bank .footer-note {
+    margin-bottom: 4px;
+  }
+
   .signature-left {
     margin-top: 10px;
     font-size: 10pt;
@@ -338,6 +444,15 @@ style.
   html.paper-a4 .signature-left {
     margin-top: 14px;
     font-size: 11pt;
+  }
+
+  html.paper-a6 .signature-left {
+    margin-top: 8px;
+    font-size: 10pt;
+  }
+
+  html.paper-a6 .footer-row.no-bank .signature-left {
+    margin-top: 10px;
   }
 
   .signature-right {
@@ -352,12 +467,25 @@ style.
 
   html.paper-a4 .signature-right .for-company { margin-bottom: 20px; }
 
+  html.paper-a6 .signature-right .for-company { margin-bottom: 12px; }
+
   .signature-right .signatory { font-size: 10pt; }
   html.paper-a4 .signature-right .signatory { font-size: 11pt; }
+  html.paper-a6 .signature-right .signatory { font-size: 10pt; }
 
   @media print {
     .invoice-box {
       page-break-inside: auto;
+    }
+
+    .invoice-box.compact-layout {
+      page-break-inside: auto;
+    }
+
+    .invoice-box.compact-layout .items-table tbody tr.blank-row-fill {
+      page-break-inside: auto;
+      height: 0 !important;
+      display: none;
     }
 
     .items-table thead {

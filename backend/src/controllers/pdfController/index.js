@@ -133,6 +133,9 @@ async function renderHtmlToPdf(htmlContent, { targetLocation, format = 'A4' }) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
+  const paper = normalizePaperFormat(format);
+  const margin = paper === 'A6' ? '2mm' : paper === 'A5' ? '3mm' : '4mm';
+
   const executablePath = await findBrowserExecutable();
   const browser = await puppeteer.launch({
     headless: true,
@@ -145,13 +148,13 @@ async function renderHtmlToPdf(htmlContent, { targetLocation, format = 'A4' }) {
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
     await page.pdf({
       path: targetLocation,
-      format,
+      format: paper,
       printBackground: true,
       margin: {
-        top: format === 'A5' ? '3mm' : '4mm',
-        right: format === 'A5' ? '3mm' : '4mm',
-        bottom: format === 'A5' ? '3mm' : '4mm',
-        left: format === 'A5' ? '3mm' : '4mm',
+        top: margin,
+        right: margin,
+        bottom: margin,
+        left: margin,
       },
     });
   } finally {
@@ -237,13 +240,16 @@ async function buildDocumentHtml(modelName, result) {
 }
 
 function normalizePaperFormat(format) {
-  return String(format || 'A4').toUpperCase() === 'A5' ? 'A5' : 'A4';
+  const paper = String(format || 'A4').toUpperCase();
+  if (paper === 'A5') return 'A5';
+  if (paper === 'A6') return 'A6';
+  return 'A4';
 }
 
 function wrapHtmlForPrint(html, format = 'A4') {
   const paper = normalizePaperFormat(format);
-  const paperClass = paper === 'A5' ? 'paper-a5' : 'paper-a4';
-  const margin = paper === 'A5' ? '3mm' : '4mm';
+  const paperClass = paper === 'A5' ? 'paper-a5' : paper === 'A6' ? 'paper-a6' : 'paper-a4';
+  const margin = paper === 'A6' ? '2mm' : paper === 'A5' ? '3mm' : '4mm';
 
   const printStyle = `
     <style>
@@ -263,6 +269,12 @@ function wrapHtmlForPrint(html, format = 'A4') {
         }
         .invoice-bottom {
           page-break-inside: avoid;
+        }
+        .invoice-box.compact-layout .invoice-bottom {
+          page-break-inside: auto;
+        }
+        .proforma-estimate {
+          page-break-inside: auto;
         }
         .footer-row .col {
           min-height: 0 !important;

@@ -16,10 +16,11 @@ module.exports = downloadPdf = async (req, res, { directory, id }) => {
       const fileId = modelName.toLowerCase() + '-' + result._id + '.pdf';
       const folderPath = modelName.toLowerCase();
       const targetLocation = path.join('src/public/download', folderPath, fileId);
+      const paperFormat = modelName.toLowerCase() === 'quote' ? 'A6' : 'A4';
 
       await custom.generatePdf(
         modelName,
-        { filename: folderPath, format: 'A4', targetLocation },
+        { filename: folderPath, format: paperFormat, targetLocation },
         result
       );
 

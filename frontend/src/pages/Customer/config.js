@@ -24,6 +24,10 @@ export const fields = {
   phone: {
     type: 'phone',
   },
+  gpay: {
+    type: 'phone',
+    label: 'GPay No',
+  },
   email: {
     type: 'email',
   },

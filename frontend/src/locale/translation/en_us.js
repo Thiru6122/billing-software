@@ -308,6 +308,7 @@ const lang = {
   bank_details: 'Bank Details (for invoice)',
   print_a4: 'Print A4',
   print_a5: 'Print A5',
+  print_a6: 'Print A6',
   'Account holder name': 'Account holder name',
   'Account number': 'Account number',
   'Bank name': 'Bank name',

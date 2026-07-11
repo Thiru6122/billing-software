@@ -1,21 +1,14 @@
 doctype html
-html(class='paper-a4')
+html(class='paper-a6')
   head
     meta(charset='utf-8')
     meta(name='viewport' content='width=device-width, initial-scale=1')
-    include _invoicePrintStyles
+    include _proformaEstimateStyles
   body
-    include _ashwinDocument
-    +ashwinDocument({
-      docTitle: 'PROFORMA INVOICE',
+    include _proformaEstimate
+    +proformaEstimate({
+      docTitle: 'Proforma Invoice',
       party: customer,
-      partyLabel: 'To :',
-      metaRows: [
-        { label: 'Proforma No', value: model.number + '/' + (model.year || '') },
-        { label: 'Date', value: moment(model.date).format('DD/MM/YYYY') },
-        { label: 'Valid Until', value: moment(model.expiredDate).format('DD/MM/YYYY') },
-        { label: 'Ref No', value: (model.createdBy && (model.createdBy.name || model.createdBy.email)) || '-' }
-      ],
-      showGstColumn: true,
-      footerNote: 'This is a proforma invoice and not a tax invoice.'
+      docNumber: 'QU' + model.number,
+      minTableRows: 10
     })

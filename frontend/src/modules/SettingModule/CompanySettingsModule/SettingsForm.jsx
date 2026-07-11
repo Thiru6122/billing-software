@@ -25,6 +25,7 @@ const bankItems = [
   { settingKey: 'company_bank_branch', valueType: 'string', label: 'Bank branch' },
   { settingKey: 'company_bank_account_number', valueType: 'string', label: 'Account number' },
   { settingKey: 'company_bank_ifsc', valueType: 'string', label: 'IFSC code' },
+  { settingKey: 'company_gpay', valueType: 'string', label: 'GPay No' },
 ];
 
 function SettingField({ item, translate }) {

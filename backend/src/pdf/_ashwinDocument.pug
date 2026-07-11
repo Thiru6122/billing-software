@@ -19,6 +19,8 @@ mixin ashwinDocument(options)
       }];
     }
     var showGstColumn = options.showGstColumn !== false;
+    var showBankDetails = options.showBankDetails !== false;
+    var showFooter = options.showFooter !== false;
     var footerNote = options.footerNote || '';
     var refNo = options.refNo
       || (model.createdBy && (model.createdBy.name || model.createdBy.email))
@@ -29,6 +31,7 @@ mixin ashwinDocument(options)
     var bankAccount = settings.company_bank_account_number || settings.company_bank_account || '';
     var bankIfsc = settings.company_bank_ifsc || '';
     var bankBranch = settings.company_bank_branch || '';
+    var bankGpay = settings.company_gpay || '9710660508';
     var companyPhone = settings.company_phone || '';
     if (settings.company_email && companyPhone) {
       companyPhone += ', ' + settings.company_email;
@@ -41,14 +44,18 @@ mixin ashwinDocument(options)
     var netAmount = options.netAmount != null
       ? options.netAmount
       : (model.total != null ? model.total : (model.amount != null ? model.amount : 0));
-    var itemRowHeight = 12;
+    var itemRowHeight = options.itemRowHeight != null ? options.itemRowHeight : 12;
     var minTableRows = options.minTableRows != null ? options.minTableRows : 15;
-    var blankRowsNeeded = items.length ? Math.max(0, minTableRows - items.length) : minTableRows;
+    var blankRowsNeeded = minTableRows > 0
+      ? (items.length ? Math.max(0, minTableRows - items.length) : minTableRows)
+      : 0;
     var maxBlankRows = !items.length ? 6 : items.length <= 2 ? 4 : items.length <= 5 ? 6 : 0;
-    var blankRowCount = items.length >= 8 ? 0 : Math.min(blankRowsNeeded, maxBlankRows);
+    var blankRowCount = minTableRows > 0 && items.length < 8
+      ? Math.min(blankRowsNeeded, maxBlankRows)
+      : 0;
     var blankFillHeight = blankRowCount * itemRowHeight;
 
-  .invoice-box
+  .invoice-box(class=options.compactLayout ? 'compact-layout' : '')
     .doc-title= docTitle
 
     .company-header
@@ -174,20 +181,29 @@ mixin ashwinDocument(options)
               span Net Amount :
               span= indianAmount(netAmount)
 
-      .footer-row
-        .col
-          .bank-title BANK DETAILS:
-          if bankName || bankAccount
-            div BANK NAME: #{bankName} A\C NO: #{bankAccount}
-          if bankIfsc
-            div IFSC CODE: #{bankIfsc}
-          if bankBranch
-            div (#{bankBranch})
-          if !bankName && !bankAccount && !bankIfsc
-            div Add bank details in Company Settings
-          if footerNote
-            .footer-note= footerNote
-          .signature-left Customer Signature and Seal
-        .col.signature-right
-          .for-company For #{settings.company_name || 'Company Name'}
-          .signatory Authorised Signatory
+      if amountInWords
+        .amount-words
+          span.label Amount in Words :
+          span= amountInWords(netAmount)
+
+      if showFooter
+        .footer-row(class=!showBankDetails ? 'no-bank' : '')
+          .col
+            if showBankDetails
+              .bank-title BANK DETAILS:
+              if bankName || bankAccount
+                div BANK NAME: #{bankName} A\C NO: #{bankAccount}
+              if bankIfsc
+                div IFSC CODE: #{bankIfsc}
+              if bankBranch
+                div (#{bankBranch})
+              if bankGpay
+                div G PAY NO: #{bankGpay}
+              if !bankName && !bankAccount && !bankIfsc && !bankGpay
+                div Add bank details in Company Settings
+            if footerNote
+              .footer-note= footerNote
+            .signature-left Customer Signature and Seal
+          .col.signature-right
+            .for-company For #{settings.company_name || 'Company Name'}
+            .signatory Authorised Signatory
