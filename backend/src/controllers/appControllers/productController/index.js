@@ -3,6 +3,7 @@ const { adjustProductStock } = require('@/services/stockService');
 
 const summary = require('./summary');
 const inventorySummary = require('./inventorySummary');
+const stockMovementReport = require('./stockMovementReport');
 const adjustStock = require('./adjustStock');
 const importProducts = require('./importProducts');
 const lookupByBarcode = require('./lookupByBarcode');
@@ -21,6 +22,7 @@ function modelController() {
   methods.update = update;
   methods.summary = (req, res) => summary(req, res);
   methods.inventorySummary = (req, res) => inventorySummary(req, res);
+  methods.stockMovementReport = (req, res) => stockMovementReport(req, res);
   methods.adjustStock = (req, res) => adjustStock(req, res);
   methods.importProducts = (req, res) => importProducts(req, res);
   methods.lookupByBarcode = (req, res) => lookupByBarcode(req, res);

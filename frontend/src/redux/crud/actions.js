@@ -54,6 +54,7 @@ export const crud = {
             pageSize: options?.items,
             total: parseInt(data.pagination.count, 10),
           },
+          aggregates: data.aggregates || {},
         };
         dispatch({
           type: actionTypes.REQUEST_SUCCESS,

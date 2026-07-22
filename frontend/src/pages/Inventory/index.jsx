@@ -14,7 +14,8 @@ import {
   Statistic,
   message,
 } from 'antd';
-import { UploadOutlined, PlusOutlined } from '@ant-design/icons';
+import { UploadOutlined, PlusOutlined, BarChartOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 import useLanguage from '@/locale/useLanguage';
 import { request } from '@/request';
 import { useMoney } from '@/settings';
@@ -174,6 +175,11 @@ export default function Inventory() {
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setAdjustOpen(true)}>
             {translate('adjust_stock')}
           </Button>
+        </Col>
+        <Col>
+          <Link to="/inventory/report">
+            <Button icon={<BarChartOutlined />}>{translate('stock_movement_report')}</Button>
+          </Link>
         </Col>
       </Row>
 

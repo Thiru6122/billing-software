@@ -31,6 +31,12 @@
   },
   {
     "settingCategory": "finance_settings",
+    "settingKey": "last_expense_number",
+    "settingValue": 0,
+    "valueType": "number"
+  },
+  {
+    "settingCategory": "finance_settings",
     "settingKey": "invoice_prefix",
     "settingValue": "inv-",
     "valueType": "string"

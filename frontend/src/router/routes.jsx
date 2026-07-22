@@ -32,7 +32,11 @@ const Taxes = lazy(() => import('@/pages/Taxes'));
 const Product = lazy(() => import('@/pages/Product'));
 const ProductCategory = lazy(() => import('@/pages/ProductCategory'));
 const Inventory = lazy(() => import('@/pages/Inventory'));
+const StockReport = lazy(() => import('@/pages/StockReport'));
+const SalesReport = lazy(() => import('@/pages/SalesReport'));
 const Barcodes = lazy(() => import('@/pages/Barcodes'));
+const Expense = lazy(() => import('@/pages/Expense'));
+const ExpenseCategory = lazy(() => import('@/pages/ExpenseCategory'));
 
 const Profile = lazy(() => import('@/pages/Profile'));
 
@@ -72,6 +76,14 @@ let routes = {
     {
       path: '/inventory',
       element: <Inventory />,
+    },
+    {
+      path: '/inventory/report',
+      element: <StockReport />,
+    },
+    {
+      path: '/sales/report',
+      element: <SalesReport />,
     },
     {
       path: '/barcodes',
@@ -137,6 +149,14 @@ let routes = {
     {
       path: '/payment',
       element: <Payment />,
+    },
+    {
+      path: '/expense',
+      element: <Expense />,
+    },
+    {
+      path: '/expense-categories',
+      element: <ExpenseCategory />,
     },
     {
       path: '/payment/read/:id',

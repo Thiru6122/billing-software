@@ -67,6 +67,45 @@ function getPaginationParams(req) {
   return { page, limit, skip };
 }
 
+const AGGREGATE_FIELD_CANDIDATES = [
+  'total',
+  'amount',
+  'credit',
+  'subTotal',
+  'taxTotal',
+  'cgstTotal',
+  'sgstTotal',
+  'igstTotal',
+  'price',
+  'cost',
+  'quantity',
+  'discount',
+];
+
+function getAggregateFields(Model) {
+  const schema = Model.schema.paths;
+  return AGGREGATE_FIELD_CANDIDATES.filter((field) => schema[field]);
+}
+
+async function computeAggregates(Model, baseQuery) {
+  const fields = getAggregateFields(Model);
+  if (!fields.length) return {};
+
+  const groupStage = { _id: null };
+  for (const field of fields) {
+    groupStage[field] = { $sum: `$${field}` };
+  }
+
+  const [result] = await Model.aggregate([{ $match: baseQuery }, { $group: groupStage }]);
+  if (!result) return {};
+
+  const aggregates = {};
+  for (const field of fields) {
+    aggregates[field] = result[field] || 0;
+  }
+  return aggregates;
+}
+
 async function runPaginatedList(Model, req, res, { populate, defaultSort } = {}) {
   const { page, limit, skip } = getPaginationParams(req);
   const baseQuery = buildBaseQuery(Model, req);
@@ -82,7 +121,11 @@ async function runPaginatedList(Model, req, res, { populate, defaultSort } = {})
     query = query.populate();
   }
 
-  const [result, count] = await Promise.all([query.exec(), Model.countDocuments(baseQuery)]);
+  const [result, count, aggregates] = await Promise.all([
+    query.exec(),
+    Model.countDocuments(baseQuery),
+    computeAggregates(Model, baseQuery),
+  ]);
   const pages = Math.ceil(count / limit) || 0;
   const pagination = { page, pages, count };
 
@@ -91,6 +134,7 @@ async function runPaginatedList(Model, req, res, { populate, defaultSort } = {})
       success: true,
       result,
       pagination,
+      aggregates,
       message: 'Successfully found all documents',
     });
   }
@@ -99,6 +143,7 @@ async function runPaginatedList(Model, req, res, { populate, defaultSort } = {})
     success: true,
     result: [],
     pagination,
+    aggregates,
     message: 'Collection is Empty',
   });
 }
@@ -109,5 +154,7 @@ module.exports = {
   buildSortQuery,
   buildBaseQuery,
   getPaginationParams,
+  getAggregateFields,
+  computeAggregates,
   runPaginatedList,
 };

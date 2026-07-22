@@ -3,9 +3,11 @@ setlocal EnableDelayedExpansion
 title Saltum Billing ^& Stock
 cd /d "%~dp0.."
 
+set "ROOT=%CD%"
+
 echo.
 echo ========================================
-echo   Saltum - Starting...
+echo   Saltum - Starting application
 echo ========================================
 echo.
 
@@ -17,21 +19,21 @@ if errorlevel 1 (
   exit /b 1
 )
 
-if not exist "backend\.env" (
+if not exist "%ROOT%\backend\.env" (
   echo ERROR: backend\.env is missing.
   echo Run install\install-customer.ps1 first.
   pause
   exit /b 1
 )
 
-if not exist "backend\node_modules" (
+if not exist "%ROOT%\backend\node_modules" (
   echo ERROR: Backend packages are not installed.
   echo Run install\install-customer.ps1 first.
   pause
   exit /b 1
 )
 
-if not exist "frontend\node_modules" (
+if not exist "%ROOT%\frontend\node_modules" (
   echo ERROR: Frontend packages are not installed.
   echo Run install\install-customer.ps1 first.
   pause
@@ -42,9 +44,8 @@ for /f "usebackq delims=" %%p in (`powershell -NoProfile -ExecutionPolicy Bypass
 if not defined APP_PORT set "APP_PORT=8888"
 
 echo Stopping any existing Saltum server on port %APP_PORT%...
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr /C:":%APP_PORT% " ^| findstr LISTENING') do (
-  taskkill /F /PID %%a >nul 2>&1
-)
+call :KillPort %APP_PORT%
+call :KillPort 3000
 
 sc query MongoDB >nul 2>&1
 if not errorlevel 1 (
@@ -52,45 +53,53 @@ if not errorlevel 1 (
 )
 
 echo.
-echo Building frontend with latest code...
-cd frontend
-if exist dist rmdir /s /q dist
+echo [1/2] Building frontend...
+cd /d "%ROOT%\frontend"
 call npm run build
 if errorlevel 1 (
   echo.
   echo ERROR: Frontend build failed. See messages above.
-  cd ..
+  cd /d "%ROOT%"
   pause
   exit /b 1
 )
-cd ..
+cd /d "%ROOT%"
 
-cd backend
+echo.
+echo [2/2] Starting Saltum server...
+cd /d "%ROOT%\backend"
 set NODE_ENV=production
 set SERVE_FRONTEND=true
 
 echo.
-echo Starting server at http://localhost:%APP_PORT%
-echo Keep this window open while using Saltum.
-echo Press Ctrl+C to stop the app.
+echo   App URL:  http://localhost:%APP_PORT%
+echo   Browser will open automatically when ready.
+echo   Keep this window open while using Saltum.
+echo   Press Ctrl+C to stop the application.
 echo.
 
 start /B powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0wait-and-open-browser.ps1" -Port %APP_PORT%
 
-npm start
+call npm start
 set "EXIT_CODE=!ERRORLEVEL!"
+cd /d "%ROOT%"
 
 if not "!EXIT_CODE!"=="0" (
   echo.
-  echo ERROR: Server failed to start ^(exit code !EXIT_CODE!^).
+  echo ERROR: Saltum failed to start ^(exit code !EXIT_CODE!^).
   echo.
   echo Common fixes:
-  echo   1. Start MongoDB service in services.msc
-  echo   2. Check DATABASE in backend\.env ^(local or Atlas^)
-  echo   3. Close any app already using port %APP_PORT%
-  echo   4. Re-run install\install-customer.ps1
+  echo   1. Check DATABASE in backend\.env ^(local MongoDB or Atlas^)
+  echo   2. Close any app already using port %APP_PORT%
+  echo   3. Re-run install\install-customer.ps1
   echo.
 )
 
 pause
 exit /b !EXIT_CODE!
+
+:KillPort
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr /C:":%1 " ^| findstr LISTENING') do (
+  taskkill /F /PID %%a >nul 2>&1
+)
+exit /b 0

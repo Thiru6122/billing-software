@@ -3,6 +3,7 @@ const { catchErrors } = require('@/handlers/errorHandlers');
 const router = express.Router();
 
 const appControllers = require('@/controllers/appControllers');
+const dashboardController = require('@/controllers/appControllers/dashboardController');
 const { routesList } = require('@/models/utils');
 
 const routerApp = (entity, controller) => {
@@ -37,6 +38,7 @@ const routerApp = (entity, controller) => {
     router.route(`/${entity}/printBarcodeLabels`).post(catchErrors(controller['printBarcodeLabels']));
     router.route(`/${entity}/generateBarcodes`).post(catchErrors(controller['generateBarcodes']));
     router.route(`/${entity}/inventorySummary`).get(catchErrors(controller['inventorySummary']));
+    router.route(`/${entity}/stockMovementReport`).get(catchErrors(controller['stockMovementReport']));
     router.route(`/${entity}/adjustStock`).post(catchErrors(controller['adjustStock']));
     router.route(`/${entity}/import`).post(catchErrors(controller['importProducts']));
   }
@@ -46,5 +48,10 @@ routesList.forEach(({ entity, controllerName }) => {
   const controller = appControllers[controllerName];
   routerApp(entity, controller);
 });
+
+router.route('/dashboard/analytics').get(catchErrors(dashboardController.analytics));
+
+const salesController = require('@/controllers/appControllers/salesController');
+router.route('/sales/report').get(catchErrors(salesController.report));
 
 module.exports = router;

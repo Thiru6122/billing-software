@@ -134,7 +134,7 @@ async function renderHtmlToPdf(htmlContent, { targetLocation, format = 'A4' }) {
   }
 
   const paper = normalizePaperFormat(format);
-  const margin = paper === 'A6' ? '2mm' : paper === 'A5' ? '3mm' : '4mm';
+  const margins = getPaperMargins(paper);
 
   const executablePath = await findBrowserExecutable();
   const browser = await puppeteer.launch({
@@ -150,12 +150,7 @@ async function renderHtmlToPdf(htmlContent, { targetLocation, format = 'A4' }) {
       path: targetLocation,
       format: paper,
       printBackground: true,
-      margin: {
-        top: margin,
-        right: margin,
-        bottom: margin,
-        left: margin,
-      },
+      margin: margins,
     });
   } finally {
     await browser.close();
@@ -246,14 +241,31 @@ function normalizePaperFormat(format) {
   return 'A4';
 }
 
+function getPaperMargins(paper) {
+  if (paper === 'A6') {
+    // Extra top margin — many thermal/A6 printers clip the first few mm
+    return { top: '8mm', right: '2mm', bottom: '2mm', left: '2mm' };
+  }
+  if (paper === 'A5') {
+    return { top: '5mm', right: '3mm', bottom: '3mm', left: '3mm' };
+  }
+  const m = '4mm';
+  return { top: m, right: m, bottom: m, left: m };
+}
+
+function formatPageMarginCss(margins) {
+  return `${margins.top} ${margins.right} ${margins.bottom} ${margins.left}`;
+}
+
 function wrapHtmlForPrint(html, format = 'A4') {
   const paper = normalizePaperFormat(format);
   const paperClass = paper === 'A5' ? 'paper-a5' : paper === 'A6' ? 'paper-a6' : 'paper-a4';
-  const margin = paper === 'A6' ? '2mm' : paper === 'A5' ? '3mm' : '4mm';
+  const margins = getPaperMargins(paper);
+  const pageMargin = formatPageMarginCss(margins);
 
   const printStyle = `
     <style>
-      @page { size: ${paper} portrait; margin: ${margin}; }
+      @page { size: ${paper} portrait; margin: ${pageMargin}; }
       @media print {
         html, body {
           width: 100% !important;

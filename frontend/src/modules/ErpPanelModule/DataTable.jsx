@@ -20,6 +20,9 @@ import { selectListItems } from '@/redux/erp/selectors';
 import { useErpContext } from '@/context/erp';
 import { enhanceColumnsWithSort } from '@/utils/tableColumns';
 import { useTableListLoader } from '@/utils/useTableListLoader';
+import { buildTableSummary } from '@/utils/tableSummary';
+import { useMoney } from '@/settings';
+import { selectMoneyFormat } from '@/redux/settings/selectors';
 import { generate as uniqueId } from 'shortid';
 import { useNavigate } from 'react-router-dom';
 
@@ -42,13 +45,23 @@ function AddNewItem({ config }) {
 
 export default function DataTable({ config, extra = [] }) {
   const translate = useLanguage();
+  const { moneyFormatter } = useMoney();
+  const money_format_settings = useSelector(selectMoneyFormat);
   let { entity, dataTableColumns, disableAdd = false, searchConfig } = config;
 
   const { DATATABLE_TITLE } = config;
 
   const { result: listResult, isLoading: listIsLoading } = useSelector(selectListItems);
 
-  const { pagination, items: dataSource } = listResult;
+  const { pagination, items: dataSource, aggregates } = listResult;
+
+  const tableSummary = buildTableSummary({
+    columns: dataTableColumns,
+    aggregates,
+    translate,
+    moneyFormatter,
+    defaultCurrency: money_format_settings?.default_currency_code,
+  });
 
   const { erpContextAction } = useErpContext();
   const { modal } = erpContextAction;
@@ -217,6 +230,7 @@ export default function DataTable({ config, extra = [] }) {
         loading={listIsLoading}
         onChange={handleTableChange}
         scroll={{ x: true }}
+        summary={tableSummary}
       />
     </>
   );

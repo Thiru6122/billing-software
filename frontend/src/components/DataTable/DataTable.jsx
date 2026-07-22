@@ -19,6 +19,8 @@ import { dataForTable } from '@/utils/dataStructure';
 import { useMoney, useDate } from '@/settings';
 import { enhanceColumnsWithSort } from '@/utils/tableColumns';
 import { useTableListLoader } from '@/utils/useTableListLoader';
+import { buildTableSummary } from '@/utils/tableSummary';
+import { selectMoneyFormat } from '@/redux/settings/selectors';
 
 import { generate as uniqueId } from 'shortid';
 
@@ -47,6 +49,7 @@ export default function DataTable({ config, extra = [] }) {
   const translate = useLanguage();
   const { moneyFormatter } = useMoney();
   const { dateFormat } = useDate();
+  const money_format_settings = useSelector(selectMoneyFormat);
 
   const items = [
     {
@@ -158,7 +161,15 @@ export default function DataTable({ config, extra = [] }) {
 
   const { result: listResult, isLoading: listIsLoading } = useSelector(selectListItems);
 
-  const { pagination, items: dataSource } = listResult;
+  const { pagination, items: dataSource, aggregates } = listResult;
+
+  const tableSummary = buildTableSummary({
+    columns: dataTableColumns,
+    aggregates,
+    translate,
+    moneyFormatter,
+    defaultCurrency: money_format_settings?.default_currency_code,
+  });
 
   const filterTable = (e) => {
     const value = e.target.value;
@@ -219,6 +230,7 @@ export default function DataTable({ config, extra = [] }) {
         loading={listIsLoading}
         onChange={handleTableChange}
         scroll={{ x: true }}
+        summary={tableSummary}
       />
     </>
   );

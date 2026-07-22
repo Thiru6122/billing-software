@@ -29,6 +29,7 @@ import {
   FilterOutlined,
   WalletOutlined,
   ReconciliationOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -83,6 +84,11 @@ function Sidebar({ collapsible, isMobile = false }) {
       label: <Link to={'/inventory'}>{translate('inventory')}</Link>,
     },
     {
+      key: 'stockReport',
+      icon: <ReconciliationOutlined />,
+      label: <Link to={'/inventory/report'}>{translate('stock_movement_report')}</Link>,
+    },
+    {
       key: 'barcodes',
       icon: <BarcodeOutlined />,
       label: <Link to={'/barcodes'}>{translate('bulk_barcode_print')}</Link>,
@@ -104,9 +110,24 @@ function Sidebar({ collapsible, isMobile = false }) {
       label: <Link to={'/quote'}>{translate('quote')}</Link>,
     },
     {
+      key: 'salesReport',
+      icon: <BarChartOutlined />,
+      label: <Link to={'/sales/report'}>{translate('sales_report')}</Link>,
+    },
+    {
       key: 'payment',
       icon: <CreditCardOutlined />,
       label: <Link to={'/payment'}>{translate('payments')}</Link>,
+    },
+    {
+      key: 'expense',
+      icon: <ReconciliationOutlined />,
+      label: <Link to={'/expense'}>{translate('expenses')}</Link>,
+    },
+    {
+      key: 'expenseCategory',
+      icon: <FilterOutlined />,
+      label: <Link to={'/expense-categories'}>{translate('expenses_category')}</Link>,
     },
 
     {

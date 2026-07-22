@@ -12,6 +12,11 @@ style.
   html.paper-a6 body {
     font-size: 9.5pt;
     line-height: 1.12;
+    padding-top: 2mm;
+  }
+
+  html.paper-a6 .proforma-estimate {
+    padding-top: 1mm;
   }
 
   .proforma-estimate {
@@ -27,7 +32,8 @@ style.
 
   html.paper-a6 .doc-title {
     font-size: 9.5pt;
-    padding: 0 4px 2px;
+    padding: 2px 4px 2px;
+    line-height: 1.2;
   }
 
   .company-header {
@@ -187,6 +193,14 @@ style.
   }
 
   @media print {
+    html.paper-a6 body {
+      padding-top: 2mm;
+    }
+
+    html.paper-a6 .proforma-estimate {
+      padding-top: 1mm;
+    }
+
     .proforma-estimate {
       page-break-inside: auto;
     }
